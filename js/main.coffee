@@ -3,6 +3,15 @@ if process.env.NODETIME_ACCOUNT_KEY?
     accountKey: process.env.NODETIME_ACCOUNT_KEY,
     appName: 'nerved'
 
+raygun = require 'raygun'
+raygunClient = new raygun.Client().init
+  apiKey: 'MJqfCmhfsVzK8wR3TML/Fw=='
+
+d = require('domain').create()
+d.on 'error', (err) ->
+  raygunClient.send err, {}, ->
+    process.exit()
+
 port = process.env.PORT || 8080
 
 express = require 'express'

@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "express": "^4.11.2",
-    "nodetime": "^0.8.15"
+    "nodetime": "^0.8.15",
+    "raygun": "^0.6.0"
   }
 }
