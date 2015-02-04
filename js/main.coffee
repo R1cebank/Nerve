@@ -18,8 +18,12 @@ express = require 'express'
 
 app = express()
 
+app.use '/css', express.static process.cwd() + '/www/css'
+app.use '/img', express.static process.cwd() + '/www/img'
+app.use '/js', express.static process.cwd() + '/www/js'
+
 app.get '/', (req, res) ->
-  res.send 'hello world!'
+  res.sendFile process.cwd() + '/www/index.html'
 
 server = app.listen port, ->
   host = server.address().address
