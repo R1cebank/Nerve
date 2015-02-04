@@ -3,6 +3,8 @@ if process.env.NODETIME_ACCOUNT_KEY?
     accountKey: process.env.NODETIME_ACCOUNT_KEY,
     appName: 'nerved'
 
+port = process.env.PORT || 8080
+
 express = require 'express'
 
 app = express()
@@ -10,7 +12,7 @@ app = express()
 app.get '/', (req, res) ->
   res.send 'hello world!'
 
-server = app.listen 80, ->
+server = app.listen port, ->
   host = server.address().address
   port = server.address().port
   console.log 'server started at http://%s:%s', host, port
