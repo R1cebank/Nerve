@@ -32,11 +32,28 @@ app.use (err, req, res, next) ->
 
 app.get '/', (req, res) ->
   res.sendFile process.cwd() + '/www/index.html'
+app.get '/login', (req, res) ->
+  res.send req
 
 server = http.listen port, ->
   host = server.address().address
   port = server.address().port
   console.log 'server started at http://%s:%s', host, port
+
+###
+post {
+  author: "",
+  title: "",
+  description: "",
+  tags: {},
+  requirement: {}, //tags and requirement are automatically generated as user input
+  status: "",
+  comp: "",
+  location: "",
+  remark: "",
+  date: "",
+}
+###
 
 server.on 'error', (err) ->
   raygunClient.send err
