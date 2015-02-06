@@ -20,6 +20,17 @@ http = require('http').Server(app)
 io = require('socket.io')(http)
 uuid = require 'node-uuid'
 bodyParser = require 'body-parser'
+mongo = require('mongodb').MongoClient
+
+mongourl = 'mongodb://nerved:CphV7caUpdYRR9@ds041561.mongolab.com:41561/heroku_app33695157'
+
+##Connect to mongodb server
+mongo.connect mongourl, (err, db) ->
+  if err?
+    raygunClient.send err
+    process.exit()
+
+  console.log 'connected to database.'
 
 
 app.use bodyParser.urlencoded extended: false
