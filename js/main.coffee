@@ -21,6 +21,7 @@ io = require('socket.io')(http)
 uuid = require 'node-uuid'
 bodyParser = require 'body-parser'
 
+
 app.use bodyParser.urlencoded extended: false
 app.use '/css', express.static process.cwd() + '/www/css'
 app.use '/img', express.static process.cwd() + '/www/img'
@@ -33,7 +34,9 @@ app.use (err, req, res, next) ->
 
 app.get '/', (req, res) ->
   res.sendFile process.cwd() + '/www/index.html'
-app.get '/login', (req, res) ->
+
+##must use x-www-form-urlencoded
+app.post '/login', (req, res) ->
   res.send "user: " + req.body.user + " pass: " + req.body.pass
 
 server = http.listen port, ->
