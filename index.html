@@ -1,0 +1,11 @@
+<html>
+<head><script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
+<script>
+  var socket = io.connect('http://nerved.herokuapp.com');
+  socket.on('handshake', function(msg) {
+    console.log(msg);
+    });
+</script>
+</head>
+<body></body>
+</html>
