@@ -2,10 +2,16 @@
 <head><script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
 <script>
   var socket = io.connect('http://nerved.herokuapp.com');
+  socket.on('connect', function() {
+    document.getElementById("stat").innerHTML = "connected to nerve";
+    socket.on('disconnect', function() {
+      document.getElementById("stat").innerHTML = "disconnected to nerve";
+    });
+  });
   socket.on('handshake', function(msg) {
     console.log(msg);
     });
 </script>
 </head>
-<body></body>
+<body><p id="stat">server status unknown</p></body>
 </html>
