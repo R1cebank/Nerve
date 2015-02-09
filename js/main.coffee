@@ -83,7 +83,7 @@ server.on 'error', (err) ->
 
 io.on 'connection', (socket) ->
   clientUUID = uuid.v1()
-  connectedClients.push socket: socket, uuid: uuid.v1(), profile: guest, enabled: no
+  connectedClients.push socket: socket, uuid: clientUUID, profile: guest, enabled: no
   socket.emit 'handshake',
     uuid: clientUUID
   socket.on 'login', (data) ->
