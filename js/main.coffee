@@ -24,6 +24,14 @@ mongo = require('mongodb').MongoClient
 
 mongourl = 'mongodb://nerved:CphV7caUpdYRR9@ds041561.mongolab.com:41561/heroku_app33695157'
 
+connectedClients = []
+
+guest =
+  name: "guest"
+  email: "nerve-guest@gmail.com"
+  profession: "guest"
+  talents: "guesting"
+
 ##Connect to mongodb server
 mongo.connect mongourl, (err, db) ->
   if err?
@@ -74,6 +82,11 @@ server.on 'error', (err) ->
   raygunClient.send err
 
 io.on 'connection', (socket) ->
-  socket.emit 'handshake', 'welcome to nerve'
+  clientUUID = uuid.v1()
+  connectedClients.push socket: socket, uuid: uuid.v1(), profile: guest, enabled: no
+  socket.emit 'handshake',
+    uuid: clientUUID
+  socket.on 'login', (data) ->
+    console.log 'client trying to login.'
   socket.on 'error', (err) ->
     raygunClient.send err
