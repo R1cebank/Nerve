@@ -25,6 +25,7 @@ mongo = require('mongodb').MongoClient
 mongourl = 'mongodb://nerved:CphV7caUpdYRR9@ds041561.mongolab.com:41561/heroku_app33695157'
 
 connectedClients = []
+authorizedClients = []
 
 guest =
   name: "guest"
@@ -78,6 +79,12 @@ post {
 }
 ###
 
+getClient = (type, element) ->
+  for client in connectedClients
+    if client[type] is element
+      return client
+  return null
+
 server.on 'error', (err) ->
   raygunClient.send err
 
@@ -86,6 +93,17 @@ io.on 'connection', (socket) ->
   connectedClients.push socket: socket, uuid: clientUUID, profile: guest, enabled: no
   socket.emit 'handshake',
     uuid: clientUUID
+  console.log 'client is connected'
+  console.log 'currently connected users: ' + connectedClients.length
+  socket.on 'disconnect', ->
+    currentClient = getClient 'socket', socket
+    if currentClient?
+      i = connectedClients.indexOf currentClient
+      if i != -1
+        connectedClients.splice i, 1
+        console.log 'user disconnected:'
+        console.log JSON.stringify currentClient.profile
+        console.log 'currently connected users: ' + connectedClients.length
   socket.on 'login', (data) ->
     console.log 'client trying to login.'
   socket.on 'error', (err) ->
