@@ -36,6 +36,8 @@ guest =
 ##Connect to mongodb server
 mongo.connect mongourl, (err, db) ->
   if err?
+
+    console.log 'filed to connect nerve database'
     raygunClient.send err
     process.exit()
 
@@ -85,6 +87,12 @@ getClient = (type, element) ->
       return client
   return null
 
+validateClient = (accessToken, uuid) ->
+  for client in authorizedClients
+    if client['accessToken'] is accessToken
+      return client['uuid']
+  return null
+
 server.on 'error', (err) ->
   raygunClient.send err
 
@@ -104,7 +112,18 @@ io.on 'connection', (socket) ->
         console.log 'user disconnected:'
         console.log JSON.stringify currentClient.profile
         console.log 'currently connected users: ' + connectedClients.length
-  socket.on 'login', (data) ->
+  socket.on 'login', (data) -> ##data={name: 'name', password:'password'}
+    ##MongoDb action here
+    ##Access token is generated using the userID + currentTime + device identifier
+    ##
+    authorizedClients.push uuid: 'A2wE002-10481E-21048F', accessToken: 'A0204E-D30EC-9201E', profile: guest
     console.log 'client trying to login.'
+  socket.on 'post', (data) -> ##{title: '', description: '', date: '', tags:'', skills:'',comp: '', location:'', expire:'', remarks:'', accessToken:'', uuid:''}
+    clientUUID = validateClient data.accessToken
+    if clientUUID?
+      ##Post stuff
+      console.log 'user ' + clientUUID + ' is allowed for action: post'
+    else
+      console.log 'client is not authorized for such action'
   socket.on 'error', (err) ->
     raygunClient.send err
