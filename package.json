@@ -35,6 +35,7 @@
     "chalk": "^0.5.1",
     "express": "^4.11.2",
     "mongodb": "^1.4.30",
+    "newrelic": "^1.16.2",
     "node-uuid": "^1.4.2",
     "nodetime": "^0.8.15",
     "raygun": "^0.6.0",
