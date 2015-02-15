@@ -126,5 +126,7 @@ io.on 'connection', (socket) ->
       console.log chalk.green 'user ' + clientUUID + ' is allowed for action: post'
     else
       console.log chalk.red 'client is not authorized for such action'
+  socket.on 'ping', ->
+    console.log chalk.blue 'recieved ping from MotionDex, keep alive.'
   socket.on 'error', (err) ->
     raygunClient.send err
