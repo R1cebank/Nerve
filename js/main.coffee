@@ -14,6 +14,7 @@ d.on 'error', (err) ->
 
 port = process.env.PORT || 3939
 
+require 'newrelic'
 express = require 'express'
 app = express()
 http = require('http').Server(app)
