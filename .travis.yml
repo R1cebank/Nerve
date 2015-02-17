@@ -3,3 +3,5 @@ node_js:
   - "0.12"
 matrix:
   fast_finish: true
+notifications:
+  slack: pud-simpero:G9GYdw13rxK7udcn4tcTgZEK
