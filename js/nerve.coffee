@@ -6,11 +6,6 @@
  # Licensed under the MIT license.
 ###
 
-if process.env.NODETIME_ACCOUNT_KEY?
-  require('nodetime').profile
-    accountKey: process.env.NODETIME_ACCOUNT_KEY,
-    appName: 'nerved'
-
 if process.env.PRODUCTION?
   raygun = require 'raygun'
   raygunClient = new raygun.Client().init
