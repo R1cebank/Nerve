@@ -8,6 +8,7 @@
 require 'newrelic'
 express = require 'express'
 app = express()
+path = require 'path'
 http = require('http').Server(app)
 io = require('socket.io')(http)
 bodyParser = require 'body-parser'
@@ -15,6 +16,8 @@ mongo = require('mongodb').MongoClient
 chalk = require 'chalk'
 winston = require 'winston'
 winston.cli()
+
+config = require './config/server-config.json'
 
 if not process.env.PRODUCTION
   chalk.enabled = yes
@@ -36,8 +39,6 @@ port = process.env.PORT || 3939
 module.exports = (options) ->
   VERBOSE = options
 
-mongourl = 'mongodb://nerved:CphV7caUpdYRR9@ds041561.mongolab.com:41561/heroku_app33695157'
-
 guest =
   name: "guest"
   email: "nerve-guest@gmail.com"
@@ -45,47 +46,38 @@ guest =
   talents: "guesting"
 
 app.use bodyParser.urlencoded extended: false
-app.use '/css', express.static process.cwd() + '/www/css'
-app.use '/img', express.static process.cwd() + '/www/img'
-app.use '/js', express.static process.cwd() + '/www/js'
+app.use express.static path.join __dirname, '/www'
 app.use (err, req, res, next) ->
   raygunClient.send err,
     request: req
     response: res
     next: next
 
-app.get '/', (req, res) ->
-  res.sendFile process.cwd() + '/www/index.html'
-
-##must use x-www-form-urlencoded
-app.post '/login', (req, res) ->
-  res.send "user: " + req.body.user + " pass: " + req.body.pass
-
-
 ##Connect to mongodb server
-mongo.connect mongourl, (err, db) ->
-  if err?
+mongo.connect config.mongoUrl, (err, db) ->
+  if err
 
     winston.error 'filed to connect nerve database'
     raygunClient.send err
     process.exit()
 
   winston.info 'connected to database.'
-  users = db.collection('users')
-  profiles = db.collection('profiles')
 
   server = exports.server = http.listen port, ->
     host = server.address().address
     port = server.address().port
-    winston.info 'server started at http://' + host + ':' + port
+    winston.info "server started at http://#{host}:#{port}"
 
   ###
   post {
     author: "",
     title: "",
     description: "",
+
+    //tags and requirement are automatically generated as user input
     tags: {},
-    requirement: {}, //tags and requirement are automatically generated as user input
+    requirement: {},
+
     status: "",
     comp: "",
     location: "",
@@ -98,4 +90,4 @@ mongo.connect mongourl, (err, db) ->
     raygunClient.send err
 
   io.on 'connection', (socket) ->
-    require('./events.js')(socket)
+    require('./events.js')(socket, db)

@@ -3,7 +3,7 @@ expect = require('chai').expect
 assert = require('chai').assert
 should = require('chai').should()
 
-describe "uuid", () ->
+describe.skip "uuid", () ->
   options =
     transports: ['websocket']
     'force new connection': true
