@@ -45,6 +45,7 @@
     "body-parser": "^1.11.0",
     "chalk": "^0.5.1",
     "express": "^4.11.2",
+    "gulp": "^3.8.11",
     "mongodb": "^1.4.30",
     "newrelic": "^1.16.2",
     "node-uuid": "^1.4.2",
