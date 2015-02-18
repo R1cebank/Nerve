@@ -1,14 +1,10 @@
-uuid = require 'node-uuid'
 winston = require 'winston'
 
 module.exports = (socket, db) ->
 
-  models = require('./models.js')(db) # Include DB here
+  models = require('./models.js')(socket, db) # Include DB here
 
-  clientUUID = uuid.v1()
-  socket.emit 'handshake',
-    uuid: clientUUID
-  winston.info 'client is connected'
+  models.connect()()
 
   socket.on 'disconnect', models.disconnect()
 

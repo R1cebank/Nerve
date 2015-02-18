@@ -1,7 +1,16 @@
-module.exports = (db) ->
+uuid = require 'node-uuid'
+winston = require 'winston'
+
+module.exports = (socket,db) ->
 
   self = { }
 
+  self.connect = ->
+    ->
+      clientUUID = uuid.v1()
+      socket.emit 'handshake',
+        uuid: clientUUID
+      winston.info 'client is connected'
 
   self.disconnect = ->
     ->
