@@ -6,7 +6,7 @@
  # Licensed under the MIT license.
 ###
 
-#require 'newrelic'
+require 'newrelic'
 express = require 'express'
 app = express()
 path = require 'path'
@@ -20,10 +20,9 @@ winston.cli()
 
 config = require './config/server-config.json'
 
-if not process.env.PRODUCTION
-  chalk.enabled = yes
-  chalk.supportsColor = yes
-  winston.info 'Forcing chalk color support.'
+chalk.enabled = yes
+chalk.supportsColor = yes
+winston.info 'Forcing chalk color support.'
 
 if process.env.PRODUCTION?
   raygun = require 'raygun'
@@ -89,6 +88,7 @@ mongo.connect config.mongoUrl, (err, db) ->
 
   server.on 'error', (err) ->
     raygunClient.send err
+    winston.error err
 
   io.on 'connection', (socket) ->
     require('./events.js')(socket, db)

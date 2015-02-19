@@ -8,6 +8,8 @@ module.exports = (socket, db) ->
 
   socket.on 'disconnect', models.disconnect()
 
+  socket.on 'register', models.register()
+
   ##data={name: 'name', password:'password'}
   socket.on 'login', models.login()
 
