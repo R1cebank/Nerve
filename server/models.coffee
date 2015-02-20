@@ -73,6 +73,7 @@ module.exports = (socket,db, winston) ->
     401 - USER NOT EXIST
     402 - LOGIN ERROR
     403 - TOKEN FORMAT
+    404 - AUTH ERROR
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
@@ -82,8 +83,65 @@ module.exports = (socket,db, winston) ->
     ->
       winston.info 'client disconnected.'
 
+  self.checkauth = (token, callback) ->
+    winston.info 'server requested to check authentication'
+    if not urlsafe.validate token
+      socket.emit 'response',
+        code: 201,
+        message: 'token format validation failed - non urlsafe',
+        errorcode: 403,
+        successcode: 0,
+        data: ''
+      callback null
+    else
+      meta = msgpack.unpack urlsafe.decode token
+      if not _.isArray(meta)
+        socket.emit 'response',
+          code: 201,
+          message: 'token format validation failed - non array',
+          errorcode: 403,
+          successcode: 0,
+          data: ''
+        callback null
+      else
+        _payload = msgpack.pack(meta.slice(0,-1))
+        _uuid = meta[0]
+        _time = meta[1]
+        _signature = meta[2]
+        profiles.findOne uuid: _uuid, (err, doc) ->
+          if !doc
+            winston.warn 'user does not exist'
+            socket.emit 'response',
+              code: 201
+              message: 'user does not exist'
+              errorcode: 401
+              successcode: 0
+              data: ''
+            callback null
+          else
+            hmac = crypto.createHmac 'sha256', doc.secret
+            hash = hmac.update(_payload).digest('hex')
+            if _signature is hash
+              winston.info 'user: ' + doc.name + ' authorized'
+              user =
+                name: doc.name
+                email: doc.email
+                profession: doc.profession
+                talents: doc.talents
+                uuid: doc.uuid
+              callback user
+            else
+              winston.warn 'user token not match'
+              socket.emit 'response',
+                code: 201
+                message: 'auth error'
+                errorcode: 404
+                successcode: 0
+                data: ''
+              callback null
+
   self.reauth = ->
-    (data) ->
+    (data, callback) ->
       winston.info 'client requested reauthentication'
       if not urlsafe.validate data.token
         socket.emit 'response',
@@ -115,19 +173,18 @@ module.exports = (socket,db, winston) ->
                 errorcode: 401
                 successcode: 0
                 data: ''
-              return
             else
               hmac = crypto.createHmac 'sha256', doc.secret
               hash = hmac.update(_payload).digest('hex')
               if _signature is hash
                 winston.info 'user: ' + doc.name + ' logged in'
-                token = self.createToken uuid: doc.uuid, secret: doc.secret
                 socket.emit 'response',
                   code: 200
                   message: 'user loggedin'
                   errorcode: 0
                   successcode: 301
                   data: data.token
+                  ##add socket into receiving group
               else
                 winston.warn 'user password not match'
                 socket.emit 'response',
@@ -163,6 +220,7 @@ module.exports = (socket,db, winston) ->
               errorcode: 0
               successcode: 301
               data: token
+              #add socket in receiving group
           else
             winston.warn 'user password not match'
             socket.emit 'response',
@@ -176,6 +234,11 @@ module.exports = (socket,db, winston) ->
   self.post = ->
     (data) ->
       winston.info 'user post'
+      user = self.checkauth data.token, (user) ->
+        if user
+          winston.info 'user ' + user.name + ' authorized to post'
+        else
+          winston.warn 'user not authorized or authentication failed'
 
   self.ping = ->
     ->
