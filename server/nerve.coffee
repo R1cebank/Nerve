@@ -18,6 +18,10 @@ chalk = require 'chalk'
 winston = require 'winston'
 winston.cli()
 
+##Setup log levels
+
+#winston.level = 'error'
+
 config = require './config/server-config.json'
 
 chalk.enabled = yes
@@ -91,4 +95,4 @@ mongo.connect config.mongoUrl, (err, db) ->
     winston.error err
 
   io.on 'connection', (socket) ->
-    require('./events.js')(socket, db)
+    require('./events.js')(socket, db, winston)

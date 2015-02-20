@@ -1,8 +1,6 @@
-winston = require 'winston'
+module.exports = (socket, db, winston) ->
 
-module.exports = (socket, db) ->
-
-  models = require('./models.js')(socket, db) # Include DB here
+  models = require('./models.js')(socket, db, winston) # Include DB here
 
   models.connect()()
 
@@ -12,6 +10,8 @@ module.exports = (socket, db) ->
 
   ##data={name: 'name', password:'password'}
   socket.on 'login', models.login()
+
+  socket.on 'reauth', models.reauth()
 
   ###
   {
