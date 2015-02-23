@@ -1,2 +1,3 @@
 socket.emit('register', {name: 'Siyuan Gao', email: 'siyuangao@gmail.com', profession: 'student', talents: ["C++", "PHP", "node.js"], uuid: '560612d0-b79b-11e4-9158-035e3da337d1', pass: '1222'})
 socket.emit('login', {email: 'siyuangao@gmail.com', password: 1222})
+socket.emit('post', {title: 'Management tutor needed', description: 'Need tutor for management 200', tags: ['MGMT200', 'Tutoring'], skills: ['Management'], comp: 12.5, loc: '44.5903,-104.7153', remarks: 'None', token: 'k9oAJDU2MDYxMmQwLWI3OWItMTFlNC05MTU4LTAzNWUzZGEzMzdkMc5U6Mdi2gBAZmI5MTMxMjVmOTJiYjJmZWE1YTE2OGMzMjIzNDI3MTkyNmNmNWI0NWExMWY2NTM3MWE5ODk0NTk5ZmEzZjdiNw'});

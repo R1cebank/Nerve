@@ -57,7 +57,7 @@ module.exports = (socket,db, winston) ->
             password:     userPass
             secret:       key
             , (err, docs) ->
-              winston.info 'new user inserted :#{data.name}:#{data.uuid}'
+              winston.info "new user inserted :#{data.name}:#{data.uuid}"
               socket.emit 'response',
                 code: 200
                 message: 'user created'
@@ -77,6 +77,7 @@ module.exports = (socket,db, winston) ->
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
+    302 - POST CREATED
   ###
 
   self.disconnect = ->
@@ -230,6 +231,18 @@ module.exports = (socket,db, winston) ->
               successcode: 0
               data: ''
 
+  ###
+  {
+    title: '',
+    description: '',
+    date: '', tags:'',
+    skills:'',comp: '',
+    location:'',
+    expire:'',
+    remarks:'',
+    accessToken:'', uuid:''
+  }
+  ###
 
   self.post = ->
     (data) ->
@@ -237,6 +250,27 @@ module.exports = (socket,db, winston) ->
       user = self.checkauth data.token, (user) ->
         if user
           winston.info 'user ' + user.name + ' authorized to post'
+          expire = new Date()
+          expire.setDate expire.getDate() + 7
+          posts.insert
+            title: data.title
+            description: data.description
+            date: new Date()
+            tags: data.tags
+            skills: data.skills
+            comp: data.comp
+            location: data.loc
+            expire: expire
+            remarks: data.remarks
+            uuid: user.uuid
+            , (err, docs) ->
+              winston.info "new post inserted: #{data.title}:#{data.loc}"
+              socket.emit 'response',
+                code: 200
+                message: 'post created'
+                errorcode: 0
+                successcode: 302
+                data: ''
         else
           winston.warn 'user not authorized or authentication failed'
 
@@ -257,5 +291,7 @@ module.exports = (socket,db, winston) ->
       if process.env.PRODUCTION
         raygunClient.send error
       winston.error error
+
+      socket.disconnect()
 
   return self
