@@ -95,7 +95,16 @@ module.exports = (socket,db, winston, raygunClient) ->
         data: ''
       callback null
     else
-      meta = msgpack.unpack urlsafe.decode token
+      try
+        meta = msgpack.unpack urlsafe.decode token
+      catch error
+        socket.emit 'response',
+          code: 201,
+          message: 'token format validation failed - non msgpack',
+          errorcode: 403,
+          successcode: 0,
+          data: ''
+        callback null
       if not _.isArray(meta)
         socket.emit 'response',
           code: 201,
@@ -152,7 +161,15 @@ module.exports = (socket,db, winston, raygunClient) ->
           successcode: 0,
           data: ''
       else
-        meta = msgpack.unpack urlsafe.decode data.token
+        try
+          meta = msgpack.unpack urlsafe.decode data.token
+        catch error
+          socket.emit 'response',
+            code: 201,
+            message: 'token format validation failed - non msgpack',
+            errorcode: 403,
+            successcode: 0,
+            data: ''
         if not _.isArray(meta)
           socket.emit 'response',
             code: 201,
