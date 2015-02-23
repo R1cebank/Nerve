@@ -1,6 +1,7 @@
-module.exports = (socket, db, winston) ->
+module.exports = (socket, db, winston, raygunClient) ->
 
-  models = require('./models.js')(socket, db, winston) # Include DB here
+  models = require('./models.js')(socket, db, winston, raygunClient)
+  # Include DB here
 
   models.connect()()
 

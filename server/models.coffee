@@ -7,7 +7,7 @@ _       = require('underscore')
 
 ##NO INPUT VALIDATION
 
-module.exports = (socket,db, winston) ->
+module.exports = (socket,db, winston, raygunClient) ->
 
   profiles = db.collection('profiles')
   posts = db.collection('posts')
@@ -288,7 +288,7 @@ module.exports = (socket,db, winston) ->
     urlsafe.encode msgpack.pack meta
   self.error = ->
     (error) ->
-      if process.env.PRODUCTION
+      if process.env.PRODUCTION?
         raygunClient.send error
       winston.error error
 

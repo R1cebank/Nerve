@@ -95,4 +95,4 @@ mongo.connect config.mongoUrl, (err, db) ->
     winston.error err
 
   io.on 'connection', (socket) ->
-    require('./events.js')(socket, db, winston)
+    require('./events.js')(socket, db, winston, raygunClient)
