@@ -28,6 +28,10 @@ module.exports = (socket, db, winston, raygunClient) ->
   ###
   socket.on 'post', models.post()
 
+  socket.on 'delete', models.delete()
+
+  socket.on 'queryall', models.queryall()
+
   socket.on 'ping', models.ping()
 
   socket.on 'error', models.error()

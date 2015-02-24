@@ -74,10 +74,13 @@ module.exports = (socket,db, winston, raygunClient) ->
     402 - LOGIN ERROR
     403 - TOKEN FORMAT
     404 - AUTH ERROR
+    405 - DELETE FAILED
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
     302 - POST CREATED
+    303 - QUERY COMPLETE
+    304 - POST DELETED
   ###
 
   self.disconnect = ->
@@ -261,6 +264,38 @@ module.exports = (socket,db, winston, raygunClient) ->
   }
   ###
 
+  self.delete = ->
+    (data) ->
+      winston.info 'user delete post'
+      self.checkauth data.token, (user) ->
+        if user
+          winston.info 'user ' + user.name + ' requested to delete ' +
+          data.postid
+          posts.remove
+            postid: data.postid
+            uuid: user.uuid
+            , (err, result) ->
+              if result
+                winston.info "post deleted: #{data.postid}"
+                socket.emit 'response',
+                  code: 200
+                  message: 'post deleted'
+                  errorcode: 0
+                  successcode: 304
+                  data: ''
+              else
+                winston.info "post delete failed: #{data.postid}"
+                socket.emit 'response',
+                  code: 201
+                  message: 'post delete failed'
+                  errorcode: 0
+                  successcode: 405
+                  data: ''
+              if err
+                raygunClient err
+                winston.error err
+
+
   self.post = ->
     (data) ->
       winston.info 'user post'
@@ -280,6 +315,7 @@ module.exports = (socket,db, winston, raygunClient) ->
             expire: expire
             remarks: data.remarks
             uuid: user.uuid
+            postid: uuid.v1()
             , (err, docs) ->
               winston.info "new post inserted: #{data.title}:#{data.loc}"
               socket.emit 'response',
@@ -290,6 +326,22 @@ module.exports = (socket,db, winston, raygunClient) ->
                 data: ''
         else
           winston.warn 'user not authorized or authentication failed'
+          socket.emit 'response',
+            code: 201
+            message: 'authentication failed - auth failed'
+            errorcode: 404
+            successcode: 0
+            data: ''
+
+  self.queryall = ->
+    ->
+      posts.find({}).toArray (err, doc) ->
+        socket.emit 'response',
+          code: 200
+          message: 'all data'
+          errorcode: 0
+          successcode: 303
+          data: doc
 
   self.ping = ->
     ->
