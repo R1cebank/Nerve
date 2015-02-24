@@ -1,6 +1,7 @@
 uuid = require 'node-uuid'
 crypto = require 'crypto'
-#jsonv = require 'jsonschema'.Validator
+jsonv = require('jsonschema').Validator
+v = new jsonv()
 msgpack = require 'msgpack'
 urlsafe = require 'urlsafe-base64'
 _       = require('underscore')
@@ -21,10 +22,39 @@ module.exports = (socket,db, winston, raygunClient) ->
         uuid: clientUUID
       winston.info 'client is connected'
 
+  registerSchema =
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      profession:
+        type: 'string'
+      talents:
+        type: 'array'
+      uuid:
+        type: 'string'
+      pass:
+        type: 'string'
+    required:
+      ['name','email','profession','talents','uuid','pass']
+
   self.register = ->
     (data) ->
       #check against existing email
-
+      vdata = v.validate data, registerSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        winston.info 'client request verification passed'
       profiles.find($or: [{email: data.email}, {uuid: data.uuid}])
       .toArray (err, docs) ->
         if docs.length > 0
@@ -75,6 +105,7 @@ module.exports = (socket,db, winston, raygunClient) ->
     403 - TOKEN FORMAT
     404 - AUTH ERROR
     405 - DELETE FAILED
+    406 - REQUEST INVALID
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
@@ -153,8 +184,28 @@ module.exports = (socket,db, winston, raygunClient) ->
                 data: ''
               callback null
 
+  reauthSchema =
+    type: 'object'
+    properties:
+      token:
+        type: 'string'
+    required:
+      ['token']
+
   self.reauth = ->
     (data, callback) ->
+      vdata = v.validate data, reauthSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        winston.info 'client request verification passed'
       winston.info 'client requested reauthentication'
       if not urlsafe.validate data.token
         socket.emit 'response',
@@ -215,9 +266,30 @@ module.exports = (socket,db, winston, raygunClient) ->
                   successcode: 0
                   data: ''
 
+  loginSchema =
+    type: 'object'
+    properties:
+      email:
+        type: 'string'
+      password:
+        type: 'string'
+    required:
+      ['email', 'password']
 
   self.login = ->
     (data) ->
+      vdata = v.validate data, loginSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        winston.info 'client request verification passed'
       winston.info 'client trying to login.'
       profiles.findOne email: data.email, (err, doc) ->
         if !doc
@@ -264,8 +336,30 @@ module.exports = (socket,db, winston, raygunClient) ->
   }
   ###
 
+  deleteSchema =
+    type: 'object'
+    properties:
+      token:
+        type: 'string'
+      postid:
+        type: 'string'
+    required:
+      ['token', 'postid']
+
   self.delete = ->
     (data) ->
+      vdata = v.validate data, deleteSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        winston.info 'client request verification passed'
       winston.info 'user delete post'
       self.checkauth data.token, (user) ->
         if user
@@ -295,9 +389,44 @@ module.exports = (socket,db, winston, raygunClient) ->
                 raygunClient err
                 winston.error err
 
+  postSchema =
+    type: 'object'
+    properties:
+      title:
+        type: 'string'
+      description:
+        type: 'string'
+      tags:
+        type: 'array'
+      skills:
+        type: 'array'
+      comp:
+        type: 'number'
+      location:
+        type: 'object'
+      remarks:
+        type: 'string'
+      token:
+        type: 'string'
+    required:
+        ['token', 'remarks', 'location', 'comp', 'skills', 'tags',
+        'description', 'title']
 
   self.post = ->
     (data) ->
+      vdata = v.validate data, postSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        winston.info 'client request verification passed'
       winston.info 'user post'
       user = self.checkauth data.token, (user) ->
         if user
@@ -317,7 +446,7 @@ module.exports = (socket,db, winston, raygunClient) ->
             uuid: user.uuid
             postid: uuid.v1()
             , (err, docs) ->
-              winston.info "new post inserted: #{data.title}:#{data.loc}"
+              winston.info "new post inserted: #{data.title}: #{data.loc}"
               socket.emit 'response',
                 code: 200
                 message: 'post created'

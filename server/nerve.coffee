@@ -5,8 +5,8 @@
  # Copyright (c) 2014 r1cebank
  # Licensed under the MIT license.
 ###
-
-require 'newrelic'
+if process.env.PRODUCTION?
+  require 'newrelic'
 express = require 'express'
 app = express()
 path = require 'path'
