@@ -409,8 +409,8 @@ module.exports = (socket,db, winston, raygunClient) ->
       token:
         type: 'string'
     required:
-        ['token', 'remarks', 'location', 'comp', 'skills', 'tags',
-        'description', 'title']
+      ['token', 'remarks', 'location', 'comp', 'skills',
+      'tags','description', 'title']
 
   self.post = ->
     (data) ->
