@@ -37,14 +37,12 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
         type: 'string'
       talents:
         type: 'array'
-      uuid:
-        type: 'string'
       pass:
         type: 'string'
       nonce:
         type: 'string'
     required:
-      ['name','email','profession','talents','uuid','pass', 'phone']
+      ['name','email','profession','talents','pass', 'phone']
 
   self.register = ->
     (data) ->
@@ -64,7 +62,8 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
         return
       else
         winston.info 'client request verification passed'
-        profiles.find($or: [{email: data.email}, {uuid: data.uuid}])
+        ID = uuid.v1()
+        profiles.find($or: [{email: data.email}, {uuid: ID}])
         .toArray (err, docs) ->
           if docs.length > 0
             winston.warn 'trying to insert existing user'
@@ -78,7 +77,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
             return
           else
             h1 = crypto.createHash 'sha256'
-              .update data.uuid
+              .update ID
               .digest 'hex'
             h2 = crypto.createHash 'sha256'
               .update new Date().toISOString()
@@ -96,7 +95,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
               profession:   data.profession
               talents:      data.talents
               accepted:     emptyArray
-              uuid:         data.uuid
+              uuid:         ID
               password:     userPass
               secret:       key
               , (err, docs) ->
@@ -795,6 +794,42 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
               successcode: 0
               data: ''
               nonce: data.nonce
+
+  geosearchSchema =
+    type: 'object'
+    properties:
+      location:
+        type: 'object'
+    required:
+      ['location']
+
+  self.geosearch = ->
+    (data) ->
+      vdata = v.validate data, geosearchSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        posts.find({location: { $near:{$geometry: data.keywords}, $maxDistance:
+          3000}}).toArray (err, docs) ->
+          socket.emit 'response',
+            code: 200
+            message: 'search data'
+            errorcode: 0
+            successcode: 303
+            data: docs
+            nonce: data.nonce
+
+
+
 
   searchbykeySchema =
     type: 'object'

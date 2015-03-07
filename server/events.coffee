@@ -19,6 +19,8 @@ module.exports = (socket, db, winston, raygunClient, newrelic) ->
 
   socket.on 'emailhash', models.emailhash()
 
+  socket.on 'geosearch', models.geosearch()
+
   socket.on 'accept', models.accept()
 
   socket.on 'postfromid', models.postfromid()
