@@ -5,6 +5,7 @@ v = new jsonv()
 msgpack = require 'msgpack'
 urlsafe = require 'urlsafe-base64'
 _       = require('underscore')
+extractor = require 'keyword-extractor'
 
 ##NO INPUT VALIDATION
 
@@ -12,6 +13,7 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   profiles = db.collection('profiles')
   posts = db.collection('posts')
+  kw = db.collection('keywords')
 
   self = { }
 
@@ -31,6 +33,8 @@ module.exports = (socket,db, winston, raygunClient) ->
         type: 'string'
       profession:
         type: 'string'
+      phone:
+        type: 'string'
       talents:
         type: 'array'
       uuid:
@@ -38,7 +42,7 @@ module.exports = (socket,db, winston, raygunClient) ->
       pass:
         type: 'string'
     required:
-      ['name','email','profession','talents','uuid','pass']
+      ['name','email','profession','talents','uuid','pass', 'phone']
 
   self.register = ->
     (data) ->
@@ -81,6 +85,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           profiles.insert
             name:         data.name
             email:        data.email
+            phone:        data.phone
             profession:   data.profession
             talents:      data.talents
             uuid:         data.uuid
@@ -390,6 +395,11 @@ module.exports = (socket,db, winston, raygunClient) ->
                 raygunClient err
                 winston.error err
 
+  extractorOptions =
+    language:"english",
+    remove_digits: true,
+    return_changed_case:true
+
   postSchema =
     type: 'object'
     properties:
@@ -412,8 +422,7 @@ module.exports = (socket,db, winston, raygunClient) ->
       token:
         type: 'string'
     required:
-      ['token', 'remarks', 'location', 'comp', 'skills',
-      'tags','description', 'title']
+      ['token', 'remarks', 'location', 'comp', 'skills','description', 'title']
 
   self.post = ->
     (data) ->
@@ -431,6 +440,9 @@ module.exports = (socket,db, winston, raygunClient) ->
       else
         winston.info 'client request verification passed'
       winston.info 'user post'
+      keywords = extractor.extract(data.description, extractorOptions)
+      winston.info 'keywords:'
+      winston.info keywords
       user = self.checkauth data.token, (user) ->
         if user
           winston.info 'user ' + user.name + ' authorized to post'
@@ -441,12 +453,19 @@ module.exports = (socket,db, winston, raygunClient) ->
           endDate.setDate endDate.getDate() + data.duration
           if(expire < endDate)
             expire.setDate endDate.getDate() + 7
+          ##Insert all keywords in database
+          for word in keywords
+            kw.insert
+              keyword: word
+              hitrate: 0
+              , (err, docs) ->
+                winston.info "keywords inserted successfully."
           posts.insert
             title: data.title
             description: data.description
             date: new Date()
             endDate: endDate
-            tags: data.tags
+            tags: keywords
             skills: data.skills
             comp: data.comp
             location: data.loc
