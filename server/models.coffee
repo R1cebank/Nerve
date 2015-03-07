@@ -22,7 +22,7 @@ module.exports = (socket,db, winston, raygunClient) ->
       clientUUID = uuid.v1()
       socket.emit 'handshake',
         uuid: clientUUID
-      winston.info 'client is connected'
+      winston.info "client is connected - #{socket.id}"
 
   registerSchema =
     type: 'object'
@@ -757,6 +757,8 @@ module.exports = (socket,db, winston, raygunClient) ->
                 hitrate: 0
                 , (err, docs) ->
                   winston.info "keywords inserted successfully."
+            if data.title.length > 100
+              data.title.length = data.title.substring(0, 100)
             posts.insert
               title: data.title
               description: data.description
