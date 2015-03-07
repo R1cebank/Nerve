@@ -1,6 +1,6 @@
-module.exports = (socket, db, winston, raygunClient) ->
+module.exports = (socket, db, winston, raygunClient, newrelic) ->
 
-  models = require('./models.js')(socket, db, winston, raygunClient)
+  models = require('./models.js')(socket, db, winston, raygunClient, newrelic)
   # Include DB here
 
   models.connect()()

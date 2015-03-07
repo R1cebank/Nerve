@@ -48,6 +48,7 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.register = ->
     (data) ->
+      newrelic.recordMetric 'Custom/Connection/RegisterAmount', 1
       #check against existing email
       vdata = v.validate data, registerSchema
       if vdata.errors.length > 0
@@ -346,6 +347,7 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.login = ->
     (data) ->
+      newrelic.recordMetric 'Custom/Connection/LoginRequest', 1
       if !data
         socket.emit 'response',
           code: 201
@@ -355,6 +357,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           data: ''
           nonce: data?.nonce
         return
+      winston.info data
       vdata = v.validate data, loginSchema
       if vdata.errors.length > 0
         winston.error 'client input invalid'
@@ -645,6 +648,7 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.accept = ->
     (data) ->
+      newrelic.recordMetric 'Custom/Connection/JobAccepted', 1
       ##accept a job
       ##Edit a user profile
       vdata = v.validate data, acceptSchema
@@ -722,6 +726,7 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.post = ->
     (data) ->
+      newrelic.recordMetric 'Custom/Connection/PostAmount', 1
       vdata = v.validate data, postSchema
       console.log vdata
       if vdata.errors.length > 0
@@ -1005,6 +1010,7 @@ module.exports = (socket,db, winston, raygunClient) ->
     urlsafe.encode msgpack.pack meta
   self.error = ->
     (error) ->
+      newrelic.recordMetric 'Custom/Connection/ErrorAmount', 1
       if process.env.PRODUCTION?
         raygunClient.send error
       winston.error error
