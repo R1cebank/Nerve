@@ -346,6 +346,15 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.login = ->
     (data) ->
+      if !data
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: ''
+          nonce: data?.nonce
+        return
       vdata = v.validate data, loginSchema
       if vdata.errors.length > 0
         winston.error 'client input invalid'
