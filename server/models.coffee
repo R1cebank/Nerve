@@ -468,7 +468,7 @@ module.exports = (socket,db, winston, raygunClient) ->
             tags: keywords
             skills: data.skills
             comp: data.comp
-            location: data.loc
+            location: data.location
             expire: expire
             remarks: data.remarks
             uuid: user.uuid
