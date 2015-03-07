@@ -6,6 +6,7 @@ msgpack = require 'msgpack'
 urlsafe = require 'urlsafe-base64'
 _       = require('underscore')
 extractor = require 'keyword-extractor'
+md5 = require 'MD5'
 
 ##NO INPUT VALIDATION
 
@@ -87,12 +88,14 @@ module.exports = (socket,db, winston, raygunClient) ->
               .digest 'hex'
             hmac = crypto.createHmac 'sha256', key
             userPass = hmac.update(data.pass).digest('hex')
+            emptyArray = []
             profiles.insert
               name:         data.name
               email:        data.email
               phone:        data.phone
               profession:   data.profession
               talents:      data.talents
+              accepted:     emptyArray
               uuid:         data.uuid
               password:     userPass
               secret:       key
@@ -123,6 +126,8 @@ module.exports = (socket,db, winston, raygunClient) ->
     302 - POST CREATED
     303 - QUERY COMPLETE
     304 - POST DELETED
+    305 - WHOAMI COMPLETE
+    306 - EMAILHASH COMPLETE
   ###
 
   self.disconnect = ->
@@ -514,8 +519,20 @@ module.exports = (socket,db, winston, raygunClient) ->
                   raygunClient err
                   winston.error err
 
+  edituserSchema =
+    type: 'object'
+    properties:
+      data:
+        type: 'string'
+      type:
+        type: 'string'
+      token:
+        type: 'string'
+    required:
+      ['token', 'data', 'type', 'postid']
 
-
+  self.editprofile = ->
+    (data) ->
 
   self.post = ->
     (data) ->
@@ -586,20 +603,101 @@ module.exports = (socket,db, winston, raygunClient) ->
               data: ''
               nonce: data.nonce
 
+  emailhashSchema =
+    type: 'object'
+    properties:
+      uuid:
+        type: 'string'
+    required:
+      ['uuid']
+
+  self.emailhash = ->
+    (data) ->
+      vdata = v.validate data, emailhashSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        profiles.findOne uuid: data.uuid, (err, doc) ->
+          if !doc
+            winston.warn 'user does not exist'
+            socket.emit 'response',
+              code: 201
+              message: 'user does not exist'
+              errorcode: 401
+              successcode: 0
+              data: ''
+              nonce: data.nonce
+            return
+          else
+            socket.emit 'response',
+              code: 200
+              message: 'user does not exist'
+              errorcode: 0
+              successcode: 306
+              data: md5(doc.email)
+              nonce: data.nonce
+
   self.queryall = ->
     (data) ->
-      posts.find({}).toArray (err, doc) ->
+      posts.find({}).toArray (err, docs) ->
         socket.emit 'response',
           code: 200
           message: 'all data'
           errorcode: 0
           successcode: 303
-          data: doc
+          data: docs
           nonce: data?.nonce
+
+  whoamiSchema =
+    type: 'object'
+    properties:
+      token:
+        type: 'string'
+    required:
+      ['token']
+
+
+  self.whoami = ->
+    (data) ->
+      vdata = v.validate data, whoamiSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        winston.info 'client request verification passed'
+        self.checkauth data.token, (user) ->
+          if user
+            user.emailhash = md5(user.email)
+            socket.emit 'response',
+              code: 200
+              message: 'whoami query'
+              errorcode: 0
+              successcode: 305
+              data: user
+              nonce: data.nonce
+
+
 
   self.ping = ->
     ->
       winston.info 'recieved ping from MotionDex/Mocha, keep alive.'
+
 
   self.createToken = (user) ->
     time = Math.floor(new Date().getTime() / 1000)

@@ -30,6 +30,12 @@ module.exports = (socket, db, winston, raygunClient) ->
 
   socket.on 'edit', models.edit()
 
+  socket.on 'whoami', models.whoami()
+
+  socket.on 'emailhash', models.emailhash()
+
+  socket.on 'accept', models.accept()
+
   socket.on 'post', models.post()
 
   socket.on 'delete', models.delete()
