@@ -2,6 +2,7 @@ socket.emit('register', {name: 'Siyuan Gao', email: 'siyuangao@gmail.com', profe
 socket.emit('login', {email: 'siyuangao@gmail.com', password: 1222})
 socket.emit('post', {title: 'Management tutor needed', duration: 12, location: {type: "Point", coordinates: [-2.5,-2.5]}, description: 'Need programmer for a company project', skills: ['Management'], comp: 12.5, remarks: 'None', token: 'k9oAJDU2MDYxMmQwLWI3OWItMTFlNC05MTU4LTAzNWUzZGEzMzdkMc5U6Mdi2gBAZmI5MTMxMjVmOTJiYjJmZWE1YTE2OGMzMjIzNDI3MTkyNmNmNWI0NWExMWY2NTM3MWE5ODk0NTk5ZmEzZjdiNw'});
 
+socket.emit('edit', {data: 'Test', type: 'title', postid: '69a69c70-c497-11e4-904d-afe681149300', token: 'k9oAJDU2MDYxMmQwLWI3OWItMTFlNC05MTU4LTAzNWUzZGEzMzdkMc5U6Mdi2gBAZmI5MTMxMjVmOTJiYjJmZWE1YTE2OGMzMjIzNDI3MTkyNmNmNWI0NWExMWY2NTM3MWE5ODk0NTk5ZmEzZjdiNw'});
 
 {
     "_id" : ObjectId("54eb5f903d2369a702de3f22"),

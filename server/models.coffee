@@ -440,7 +440,7 @@ module.exports = (socket,db, winston, raygunClient) ->
   self.edit = ->
     (data) ->
       ##Edit existing data here
-      vdata = v.validate data, postSchema
+      vdata = v.validate data, editSchema
       console.log vdata
       if vdata.errors.length > 0
         winston.error 'client input invalid'
@@ -453,6 +453,36 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         ##Input valid, starting prepare to edit
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to delete ' +
+            data.postid
+            posts.update
+              postid: data.postid
+              uuid: user.uuid
+              ,
+                $set:
+                  "#{data.type}": data.data
+              , (err, result) ->
+                if result
+                  winston.info "post altered: #{data.postid}"
+                  socket.emit 'response',
+                    code: 200
+                    message: 'post altered'
+                    errorcode: 0
+                    successcode: 304
+                    data: ''
+                else
+                  winston.info "post alter failed: #{data.postid}"
+                  socket.emit 'response',
+                    code: 201
+                    message: 'post alter failed'
+                    errorcode: 0
+                    successcode: 405
+                    data: ''
+                if err
+                  raygunClient err
+                  winston.error err
 
 
 
