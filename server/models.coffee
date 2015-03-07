@@ -595,7 +595,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 0
           successcode: 303
           data: doc
-          nonce: data.nonce
+          nonce: data?.nonce
 
   self.ping = ->
     ->
