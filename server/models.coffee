@@ -41,6 +41,8 @@ module.exports = (socket,db, winston, raygunClient) ->
         type: 'string'
       pass:
         type: 'string'
+      nonce:
+        type: 'string'
     required:
       ['name','email','profession','talents','uuid','pass', 'phone']
 
@@ -56,6 +58,8 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
+
         return
       else
         winston.info 'client request verification passed'
@@ -69,6 +73,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 400
               successcode: 0
               data: ''
+              nonce: data.nonce
             return
           else
             h1 = crypto.createHash 'sha256'
@@ -99,6 +104,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                   errorcode: 0
                   successcode: 300
                   data: ''
+                  nonce: data.nonce
 
   ###response codes
     200 - OK
@@ -132,6 +138,7 @@ module.exports = (socket,db, winston, raygunClient) ->
         errorcode: 403,
         successcode: 0,
         data: ''
+        nonce: data.nonce
       callback null
     else
       try
@@ -143,6 +150,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 403,
           successcode: 0,
           data: ''
+          nonce: data.nonce
         callback null
       if not _.isArray(meta)
         socket.emit 'response',
@@ -151,6 +159,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 403,
           successcode: 0,
           data: ''
+          nonce: data.nonce
         callback null
       else
         _payload = msgpack.pack(meta.slice(0,-1))
@@ -166,6 +175,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 401
               successcode: 0
               data: ''
+              nonce: data.nonce
             callback null
           else
             hmac = crypto.createHmac 'sha256', doc.secret
@@ -187,6 +197,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                 errorcode: 404
                 successcode: 0
                 data: ''
+                nonce: data.nonce
               callback null
 
   reauthSchema =
@@ -208,6 +219,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
         return
       else
         winston.info 'client request verification passed'
@@ -219,6 +231,7 @@ module.exports = (socket,db, winston, raygunClient) ->
             errorcode: 403,
             successcode: 0,
             data: ''
+            nonce: data.nonce
         else
           try
             meta = msgpack.unpack urlsafe.decode data.token
@@ -229,6 +242,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 403,
               successcode: 0,
               data: ''
+              nonce: data.nonce
           if not _.isArray(meta)
             socket.emit 'response',
               code: 201,
@@ -236,6 +250,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 403,
               successcode: 0,
               data: ''
+              nonce: data.nonce
           else
             _payload = msgpack.pack(meta.slice(0,-1))
             _uuid = meta[0]
@@ -250,6 +265,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                   errorcode: 401
                   successcode: 0
                   data: ''
+                  nonce: data.nonce
               else
                 hmac = crypto.createHmac 'sha256', doc.secret
                 hash = hmac.update(_payload).digest('hex')
@@ -261,6 +277,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 0
                     successcode: 301
                     data: data.token
+                    nonce: data.nonce
                     ##add socket into receiving group
                 else
                   winston.warn 'user password not match'
@@ -270,6 +287,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 402
                     successcode: 0
                     data: ''
+                    nonce: data.nonce
 
   loginSchema =
     type: 'object'
@@ -292,6 +310,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
         return
       else
         winston.info 'client request verification passed'
@@ -305,6 +324,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 401
               successcode: 0
               data: ''
+              nonce: data.nonce
             return
           else
             hmac = crypto.createHmac 'sha256', doc.secret
@@ -318,6 +338,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                 errorcode: 0
                 successcode: 301
                 data: token
+                nonce: data.nonce
                 #add socket in receiving group
             else
               winston.warn 'user password not match'
@@ -327,6 +348,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                 errorcode: 402
                 successcode: 0
                 data: ''
+                nonce: data.nonce
 
   ###
   {
@@ -363,6 +385,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
         return
       else
         winston.info 'client request verification passed'
@@ -383,6 +406,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 0
                     successcode: 304
                     data: ''
+                    nonce: data.nonce
                 else
                   winston.info "post delete failed: #{data.postid}"
                   socket.emit 'response',
@@ -391,6 +415,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 0
                     successcode: 405
                     data: ''
+                    nonce: data.nonce
                 if err
                   raygunClient err
                   winston.error err
@@ -450,6 +475,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
         return
       else
         ##Input valid, starting prepare to edit
@@ -474,6 +500,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 0
                     successcode: 304
                     data: ''
+                    nonce: data.nonce
                 else
                   winston.info "post alter failed: #{data.postid}"
                   socket.emit 'response',
@@ -482,6 +509,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     errorcode: 0
                     successcode: 405
                     data: ''
+                    nonce: data.nonce
                 if err
                   raygunClient err
                   winston.error err
@@ -501,6 +529,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 406
           successcode: 0
           data: vdata.errors[0].message
+          nonce: data.nonce
         return
       else
         winston.info 'client request verification passed'
@@ -546,6 +575,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                   errorcode: 0
                   successcode: 302
                   data: ''
+                  nonce: data.nonce
           else
             winston.warn 'user not authorized or authentication failed'
             socket.emit 'response',
@@ -554,6 +584,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               errorcode: 404
               successcode: 0
               data: ''
+              nonce: data.nonce
 
   self.queryall = ->
     ->
@@ -564,6 +595,7 @@ module.exports = (socket,db, winston, raygunClient) ->
           errorcode: 0
           successcode: 303
           data: doc
+          nonce: data.nonce
 
   self.ping = ->
     ->
