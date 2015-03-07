@@ -587,7 +587,7 @@ module.exports = (socket,db, winston, raygunClient) ->
               nonce: data.nonce
 
   self.queryall = ->
-    ->
+    (data) ->
       posts.find({}).toArray (err, doc) ->
         socket.emit 'response',
           code: 200
