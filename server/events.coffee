@@ -36,6 +36,8 @@ module.exports = (socket, db, winston, raygunClient) ->
 
   socket.on 'accept', models.accept()
 
+  socket.on 'withdraw', models.withdraw()
+
   socket.on 'editprofile', models.editprofile()
 
   socket.on 'post', models.post()

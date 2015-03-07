@@ -121,6 +121,9 @@ module.exports = (socket,db, winston, raygunClient) ->
     405 - DELETE FAILED
     406 - REQUEST INVALID
     407 - ALTER FAILED
+    408 - JOB ACCEPTED
+    409 - POST NOT EXIST
+    410 - WITHDREW FAILED
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
@@ -130,6 +133,8 @@ module.exports = (socket,db, winston, raygunClient) ->
     305 - WHOAMI COMPLETE
     306 - EMAILHASH COMPLETE
     307 - ALTER COMPLETED
+    308 - JOB ACCEPT FAILED
+    309 - WITHDREW COMPLETE
   ###
 
   self.disconnect = ->
@@ -192,6 +197,8 @@ module.exports = (socket,db, winston, raygunClient) ->
               user =
                 name: doc.name
                 email: doc.email
+                phone: doc.phone
+                accepted: doc.accepted
                 profession: doc.profession
                 talents: doc.talents
                 uuid: doc.uuid
@@ -599,6 +606,79 @@ module.exports = (socket,db, winston, raygunClient) ->
   self.accept = ->
     (data) ->
       ##accept a job
+      ##Edit a user profile
+      vdata = v.validate data, acceptSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        ##Input valid, starting prepare to edit
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to accept job' +
+            user.postid
+            posts.find({postid: data.postid})
+            .toArray (err, docs) ->
+              if docs.length < 1
+                winston.warn 'post does not exist'
+                socket.emit 'response',
+                  code: 201
+                  message: 'post does not exist'
+                  errorcode: 409
+                  successcode: 0
+                  data: ''
+                  nonce: data.nonce
+                return
+              else
+                if _.indexOf(user.accepted, data.postid) != -1
+                  socket.emit 'response',
+                    code: 201
+                    message: 'job accepted failed - uuid exists'
+                    errorcode: 0
+                    successcode: 408
+                    data: ''
+                    nonce: data.nonce
+                  return
+                ## Push uuid
+                user.accepted.push data.postid
+                query = {}
+                query['accepted'] = user.accepted
+                profiles.update
+                  uuid: user.uuid
+                  ,
+                    $set:
+                      query
+                  , (err, result) ->
+                    if result
+                      winston.info "job accepted: #{data.postid}"
+                      socket.emit 'response',
+                        code: 200
+                        message: 'job accepted'
+                        errorcode: 0
+                        successcode: 308
+                        data: ''
+                        nonce: data.nonce
+                    else
+                      winston.info "job accepted: #{data.postid}"
+                      socket.emit 'response',
+                        code: 201
+                        message: 'job accepted failed'
+                        errorcode: 0
+                        successcode: 408
+                        data: ''
+                        nonce: data.nonce
+                    if err
+                      raygunClient err
+                      winston.error err
+
 
   self.post = ->
     (data) ->
@@ -757,6 +837,81 @@ module.exports = (socket,db, winston, raygunClient) ->
               successcode: 305
               data: user
               nonce: data.nonce
+
+  withdrawSchema =
+    type: 'object'
+    properties:
+      postid:
+        type: 'string'
+      token:
+        type: 'string'
+    required:
+      ['token', 'postid']
+
+  self.withdraw = ->
+    (data) ->
+      ##Withdraw a current application
+      vdata = v.validate data, acceptSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        ##user passed input validation
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to withdraw job' +
+            user.postid
+            if _.indexOf(user.accepted, data.postid) == -1
+              winston.warn 'post does not exist'
+              socket.emit 'response',
+                code: 201
+                message: 'post does not exist'
+                errorcode: 409
+                successcode: 0
+                data: ''
+                nonce: data.nonce
+              return
+            else
+              ## Push uuid
+              query = {}
+              user.accepted.splice(_.indexOf(user.accepted, data.postid), 1)
+              query['accepted'] = user.accepted
+              profiles.update
+                uuid: user.uuid
+                ,
+                  $set:
+                    query
+                , (err, result) ->
+                  if result
+                    winston.info "job withdrew: #{data.postid}"
+                    socket.emit 'response',
+                      code: 200
+                      message: 'job withdrew'
+                      errorcode: 0
+                      successcode: 309
+                      data: ''
+                      nonce: data.nonce
+                  else
+                    winston.info "job withdrew: #{data.postid}"
+                    socket.emit 'response',
+                      code: 201
+                      message: 'job withdrew failed'
+                      errorcode: 0
+                      successcode: 410
+                      data: ''
+                      nonce: data.nonce
+                  if err
+                    raygunClient err
+                    winston.error err
+
 
 
 
