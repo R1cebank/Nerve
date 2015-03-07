@@ -59,46 +59,46 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         winston.info 'client request verification passed'
-      profiles.find($or: [{email: data.email}, {uuid: data.uuid}])
-      .toArray (err, docs) ->
-        if docs.length > 0
-          winston.warn 'trying to insert existing user'
-          socket.emit 'response',
-            code: 201
-            message: 'user exist'
-            errorcode: 400
-            successcode: 0
-            data: ''
-          return
-        else
-          h1 = crypto.createHash 'sha256'
-            .update data.uuid
-            .digest 'hex'
-          h2 = crypto.createHash 'sha256'
-            .update new Date().toISOString()
-            .digest 'hex'
-          key = crypto.createHash 'sha256'
-            .update h1 + h2
-            .digest 'hex'
-          hmac = crypto.createHmac 'sha256', key
-          userPass = hmac.update(data.pass).digest('hex')
-          profiles.insert
-            name:         data.name
-            email:        data.email
-            phone:        data.phone
-            profession:   data.profession
-            talents:      data.talents
-            uuid:         data.uuid
-            password:     userPass
-            secret:       key
-            , (err, docs) ->
-              winston.info "new user inserted :#{data.name}:#{data.uuid}"
-              socket.emit 'response',
-                code: 200
-                message: 'user created'
-                errorcode: 0
-                successcode: 300
-                data: ''
+        profiles.find($or: [{email: data.email}, {uuid: data.uuid}])
+        .toArray (err, docs) ->
+          if docs.length > 0
+            winston.warn 'trying to insert existing user'
+            socket.emit 'response',
+              code: 201
+              message: 'user exist'
+              errorcode: 400
+              successcode: 0
+              data: ''
+            return
+          else
+            h1 = crypto.createHash 'sha256'
+              .update data.uuid
+              .digest 'hex'
+            h2 = crypto.createHash 'sha256'
+              .update new Date().toISOString()
+              .digest 'hex'
+            key = crypto.createHash 'sha256'
+              .update h1 + h2
+              .digest 'hex'
+            hmac = crypto.createHmac 'sha256', key
+            userPass = hmac.update(data.pass).digest('hex')
+            profiles.insert
+              name:         data.name
+              email:        data.email
+              phone:        data.phone
+              profession:   data.profession
+              talents:      data.talents
+              uuid:         data.uuid
+              password:     userPass
+              secret:       key
+              , (err, docs) ->
+                winston.info "new user inserted :#{data.name}:#{data.uuid}"
+                socket.emit 'response',
+                  code: 200
+                  message: 'user created'
+                  errorcode: 0
+                  successcode: 300
+                  data: ''
 
   ###response codes
     200 - OK
@@ -211,65 +211,65 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         winston.info 'client request verification passed'
-      winston.info 'client requested reauthentication'
-      if not urlsafe.validate data.token
-        socket.emit 'response',
-          code: 201,
-          message: 'token format validation failed - non urlsafe',
-          errorcode: 403,
-          successcode: 0,
-          data: ''
-      else
-        try
-          meta = msgpack.unpack urlsafe.decode data.token
-        catch error
+        winston.info 'client requested reauthentication'
+        if not urlsafe.validate data.token
           socket.emit 'response',
             code: 201,
-            message: 'token format validation failed - non msgpack',
-            errorcode: 403,
-            successcode: 0,
-            data: ''
-        if not _.isArray(meta)
-          socket.emit 'response',
-            code: 201,
-            message: 'token format validation failed - non array',
+            message: 'token format validation failed - non urlsafe',
             errorcode: 403,
             successcode: 0,
             data: ''
         else
-          _payload = msgpack.pack(meta.slice(0,-1))
-          _uuid = meta[0]
-          _time = meta[1]
-          _signature = meta[2]
-          profiles.findOne uuid: _uuid, (err, doc) ->
-            if !doc
-              winston.warn 'user does not exist'
-              socket.emit 'response',
-                code: 201
-                message: 'user does not exist'
-                errorcode: 401
-                successcode: 0
-                data: ''
-            else
-              hmac = crypto.createHmac 'sha256', doc.secret
-              hash = hmac.update(_payload).digest('hex')
-              if _signature is hash
-                winston.info 'user: ' + doc.name + ' logged in'
-                socket.emit 'response',
-                  code: 200
-                  message: 'user loggedin'
-                  errorcode: 0
-                  successcode: 301
-                  data: data.token
-                  ##add socket into receiving group
-              else
-                winston.warn 'user password not match'
+          try
+            meta = msgpack.unpack urlsafe.decode data.token
+          catch error
+            socket.emit 'response',
+              code: 201,
+              message: 'token format validation failed - non msgpack',
+              errorcode: 403,
+              successcode: 0,
+              data: ''
+          if not _.isArray(meta)
+            socket.emit 'response',
+              code: 201,
+              message: 'token format validation failed - non array',
+              errorcode: 403,
+              successcode: 0,
+              data: ''
+          else
+            _payload = msgpack.pack(meta.slice(0,-1))
+            _uuid = meta[0]
+            _time = meta[1]
+            _signature = meta[2]
+            profiles.findOne uuid: _uuid, (err, doc) ->
+              if !doc
+                winston.warn 'user does not exist'
                 socket.emit 'response',
                   code: 201
-                  message: 'login error'
-                  errorcode: 402
+                  message: 'user does not exist'
+                  errorcode: 401
                   successcode: 0
                   data: ''
+              else
+                hmac = crypto.createHmac 'sha256', doc.secret
+                hash = hmac.update(_payload).digest('hex')
+                if _signature is hash
+                  winston.info 'user: ' + doc.name + ' logged in'
+                  socket.emit 'response',
+                    code: 200
+                    message: 'user loggedin'
+                    errorcode: 0
+                    successcode: 301
+                    data: data.token
+                    ##add socket into receiving group
+                else
+                  winston.warn 'user password not match'
+                  socket.emit 'response',
+                    code: 201
+                    message: 'login error'
+                    errorcode: 402
+                    successcode: 0
+                    data: ''
 
   loginSchema =
     type: 'object'
@@ -295,38 +295,38 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         winston.info 'client request verification passed'
-      winston.info 'client trying to login.'
-      profiles.findOne email: data.email, (err, doc) ->
-        if !doc
-          winston.warn 'user does not exist'
-          socket.emit 'response',
-            code: 201
-            message: 'user does not exist'
-            errorcode: 401
-            successcode: 0
-            data: ''
-          return
-        else
-          hmac = crypto.createHmac 'sha256', doc.secret
-          userPass = hmac.update(data.password).digest('hex')
-          if userPass is doc.password
-            winston.info 'user: ' + doc.name + ' logged in'
-            token = self.createToken uuid: doc.uuid, secret: doc.secret
-            socket.emit 'response',
-              code: 200
-              message: 'user loggedin'
-              errorcode: 0
-              successcode: 301
-              data: token
-              #add socket in receiving group
-          else
-            winston.warn 'user password not match'
+        winston.info 'client trying to login.'
+        profiles.findOne email: data.email, (err, doc) ->
+          if !doc
+            winston.warn 'user does not exist'
             socket.emit 'response',
               code: 201
-              message: 'login error'
-              errorcode: 402
+              message: 'user does not exist'
+              errorcode: 401
               successcode: 0
               data: ''
+            return
+          else
+            hmac = crypto.createHmac 'sha256', doc.secret
+            userPass = hmac.update(data.password).digest('hex')
+            if userPass is doc.password
+              winston.info 'user: ' + doc.name + ' logged in'
+              token = self.createToken uuid: doc.uuid, secret: doc.secret
+              socket.emit 'response',
+                code: 200
+                message: 'user loggedin'
+                errorcode: 0
+                successcode: 301
+                data: token
+                #add socket in receiving group
+            else
+              winston.warn 'user password not match'
+              socket.emit 'response',
+                code: 201
+                message: 'login error'
+                errorcode: 402
+                successcode: 0
+                data: ''
 
   ###
   {
@@ -366,34 +366,34 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         winston.info 'client request verification passed'
-      winston.info 'user delete post'
-      self.checkauth data.token, (user) ->
-        if user
-          winston.info 'user ' + user.name + ' requested to delete ' +
-          data.postid
-          posts.remove
-            postid: data.postid
-            uuid: user.uuid
-            , (err, result) ->
-              if result
-                winston.info "post deleted: #{data.postid}"
-                socket.emit 'response',
-                  code: 200
-                  message: 'post deleted'
-                  errorcode: 0
-                  successcode: 304
-                  data: ''
-              else
-                winston.info "post delete failed: #{data.postid}"
-                socket.emit 'response',
-                  code: 201
-                  message: 'post delete failed'
-                  errorcode: 0
-                  successcode: 405
-                  data: ''
-              if err
-                raygunClient err
-                winston.error err
+        winston.info 'user delete post'
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to delete ' +
+            data.postid
+            posts.remove
+              postid: data.postid
+              uuid: user.uuid
+              , (err, result) ->
+                if result
+                  winston.info "post deleted: #{data.postid}"
+                  socket.emit 'response',
+                    code: 200
+                    message: 'post deleted'
+                    errorcode: 0
+                    successcode: 304
+                    data: ''
+                else
+                  winston.info "post delete failed: #{data.postid}"
+                  socket.emit 'response',
+                    code: 201
+                    message: 'post delete failed'
+                    errorcode: 0
+                    successcode: 405
+                    data: ''
+                if err
+                  raygunClient err
+                  winston.error err
 
   extractorOptions =
     language:"english",
@@ -407,8 +407,6 @@ module.exports = (socket,db, winston, raygunClient) ->
         type: 'string'
       description:
         type: 'string'
-      tags:
-        type: 'array'
       skills:
         type: 'array'
       comp:
@@ -422,7 +420,42 @@ module.exports = (socket,db, winston, raygunClient) ->
       token:
         type: 'string'
     required:
-      ['token', 'remarks', 'location', 'comp', 'skills','description', 'title']
+      ['token', 'remarks', 'location', 'comp', 'skills','description', 'title',
+      'duration']
+
+  editSchema =
+    type: 'object'
+    properties:
+      data:
+        type: 'string'
+      type:
+        type: 'string'
+      postid:
+        type: 'string'
+      token:
+        type: 'string'
+    required:
+      ['token', 'data', 'type', 'postid']
+
+  self.edit = ->
+    (data) ->
+      ##Edit existing data here
+      vdata = v.validate data, postSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+        return
+      else
+        ##Input valid, starting prepare to edit
+
+
+
 
   self.post = ->
     (data) ->
@@ -439,56 +472,56 @@ module.exports = (socket,db, winston, raygunClient) ->
         return
       else
         winston.info 'client request verification passed'
-      winston.info 'user post'
-      keywords = extractor.extract(data.description, extractorOptions)
-      winston.info 'keywords:'
-      winston.info keywords
-      user = self.checkauth data.token, (user) ->
-        if user
-          winston.info 'user ' + user.name + ' authorized to post'
-          ##Using duratino to set expire date
-          expire = new Date()
-          expire.setDate expire.getDate() + 7
-          endDate = new Date()
-          endDate.setDate endDate.getDate() + data.duration
-          if(expire < endDate)
-            expire.setDate endDate.getDate() + 7
-          ##Insert all keywords in database
-          for word in keywords
-            kw.insert
-              keyword: word
-              hitrate: 0
+        winston.info 'user post'
+        keywords = extractor.extract(data.description, extractorOptions)
+        winston.info 'keywords:'
+        winston.info keywords
+        user = self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' authorized to post'
+            ##Using duratino to set expire date
+            expire = new Date()
+            expire.setDate expire.getDate() + 7
+            endDate = new Date()
+            endDate.setDate endDate.getDate() + data.duration
+            if(expire < endDate)
+              expire.setDate endDate.getDate() + 7
+            ##Insert all keywords in database
+            for word in keywords
+              kw.insert
+                keyword: word
+                hitrate: 0
+                , (err, docs) ->
+                  winston.info "keywords inserted successfully."
+            posts.insert
+              title: data.title
+              description: data.description
+              date: new Date()
+              endDate: endDate
+              tags: keywords
+              skills: data.skills
+              comp: data.comp
+              location: data.location
+              expire: expire
+              remarks: data.remarks
+              uuid: user.uuid
+              postid: uuid.v1()
               , (err, docs) ->
-                winston.info "keywords inserted successfully."
-          posts.insert
-            title: data.title
-            description: data.description
-            date: new Date()
-            endDate: endDate
-            tags: keywords
-            skills: data.skills
-            comp: data.comp
-            location: data.location
-            expire: expire
-            remarks: data.remarks
-            uuid: user.uuid
-            postid: uuid.v1()
-            , (err, docs) ->
-              winston.info "new post inserted: #{data.title}: #{data.loc}"
-              socket.emit 'response',
-                code: 200
-                message: 'post created'
-                errorcode: 0
-                successcode: 302
-                data: ''
-        else
-          winston.warn 'user not authorized or authentication failed'
-          socket.emit 'response',
-            code: 201
-            message: 'authentication failed - auth failed'
-            errorcode: 404
-            successcode: 0
-            data: ''
+                winston.info "new post inserted: #{data.title}: #{data.loc}"
+                socket.emit 'response',
+                  code: 200
+                  message: 'post created'
+                  errorcode: 0
+                  successcode: 302
+                  data: ''
+          else
+            winston.warn 'user not authorized or authentication failed'
+            socket.emit 'response',
+              code: 201
+              message: 'authentication failed - auth failed'
+              errorcode: 404
+              successcode: 0
+              data: ''
 
   self.queryall = ->
     ->

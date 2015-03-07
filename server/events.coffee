@@ -13,7 +13,7 @@ module.exports = (socket, db, winston, raygunClient) ->
   socket.on 'login', models.login()
 
   socket.on 'reauth', models.reauth()
-  
+
 
   ###
   {
@@ -27,6 +27,9 @@ module.exports = (socket, db, winston, raygunClient) ->
     accessToken:'', uuid:''
   }
   ###
+
+  socket.on 'edit', models.edit()
+
   socket.on 'post', models.post()
 
   socket.on 'delete', models.delete()
