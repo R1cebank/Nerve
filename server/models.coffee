@@ -346,6 +346,7 @@ module.exports = (socket,db, winston, raygunClient) ->
     required:
       ['token', 'postid']
 
+
   self.delete = ->
     (data) ->
       vdata = v.validate data, deleteSchema
@@ -402,6 +403,8 @@ module.exports = (socket,db, winston, raygunClient) ->
         type: 'array'
       comp:
         type: 'number'
+      duration:
+        type: 'number'
       location:
         type: 'object'
       remarks:
@@ -431,12 +434,18 @@ module.exports = (socket,db, winston, raygunClient) ->
       user = self.checkauth data.token, (user) ->
         if user
           winston.info 'user ' + user.name + ' authorized to post'
+          ##Using duratino to set expire date
           expire = new Date()
           expire.setDate expire.getDate() + 7
+          endDate = new Date()
+          endDate.setDate endDate.getDate() + data.duration
+          if(expire < endDate)
+            expire.setDate endDate.getDate() + 7
           posts.insert
             title: data.title
             description: data.description
             date: new Date()
+            endDate: endDate
             tags: data.tags
             skills: data.skills
             comp: data.comp

@@ -13,6 +13,7 @@ module.exports = (socket, db, winston, raygunClient) ->
   socket.on 'login', models.login()
 
   socket.on 'reauth', models.reauth()
+  
 
   ###
   {
