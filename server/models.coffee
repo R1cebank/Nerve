@@ -1052,7 +1052,6 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
       if process.env.PRODUCTION?
         raygunClient.send error
       winston.error error
-
       socket.disconnect()
 
   return self
