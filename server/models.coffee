@@ -9,7 +9,7 @@ extractor = require 'keyword-extractor'
 md5 = require 'MD5'
 
 
-module.exports = (socket,db, winston, raygunClient) ->
+module.exports = (socket,db, winston, raygunClient, newrelic) ->
 
   profiles = db.collection('profiles')
   posts = db.collection('posts')
