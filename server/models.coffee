@@ -457,12 +457,14 @@ module.exports = (socket,db, winston, raygunClient) ->
           if user
             winston.info 'user ' + user.name + ' requested to delete ' +
             data.postid
+            query = {}
+            query[data.type] = data.data
             posts.update
               postid: data.postid
               uuid: user.uuid
               ,
                 $set:
-                  "#{data.type}": data.data
+                  query
               , (err, result) ->
                 if result
                   winston.info "post altered: #{data.postid}"
