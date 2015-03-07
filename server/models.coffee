@@ -800,8 +800,10 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
     properties:
       location:
         type: 'object'
+      maxDist:
+        type: 'number'
     required:
-      ['location']
+      ['location', 'maxDist']
 
   self.geosearch = ->
     (data) ->
@@ -818,8 +820,8 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
           nonce: data.nonce
         return
       else
-        posts.find({location: { $near:{$geometry: data.keywords}, $maxDistance:
-          3000}}).toArray (err, docs) ->
+        posts.find({location: { $near:{$geometry: data.location, $maxDistance:
+          data.maxDist}}}).toArray (err, docs) ->
           socket.emit 'response',
             code: 200
             message: 'search data'
