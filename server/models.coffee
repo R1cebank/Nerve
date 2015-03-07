@@ -49,6 +49,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
       newrelic.recordMetric 'Custom/Connection/RegisterAmount', 1
       #check against existing email
       vdata = v.validate data, registerSchema
+      winston.info data
       if vdata.errors.length > 0
         winston.error 'client input invalid'
         socket.emit 'response',
