@@ -120,6 +120,7 @@ module.exports = (socket,db, winston, raygunClient) ->
     404 - AUTH ERROR
     405 - DELETE FAILED
     406 - REQUEST INVALID
+    407 - ALTER FAILED
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
@@ -128,6 +129,7 @@ module.exports = (socket,db, winston, raygunClient) ->
     304 - POST DELETED
     305 - WHOAMI COMPLETE
     306 - EMAILHASH COMPLETE
+    307 - ALTER COMPLETED
   ###
 
   self.disconnect = ->
@@ -503,7 +505,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     code: 200
                     message: 'post altered'
                     errorcode: 0
-                    successcode: 304
+                    successcode: 307
                     data: ''
                     nonce: data.nonce
                 else
@@ -512,7 +514,7 @@ module.exports = (socket,db, winston, raygunClient) ->
                     code: 201
                     message: 'post alter failed'
                     errorcode: 0
-                    successcode: 405
+                    successcode: 407
                     data: ''
                     nonce: data.nonce
                 if err
@@ -529,11 +531,70 @@ module.exports = (socket,db, winston, raygunClient) ->
       token:
         type: 'string'
     required:
-      ['token', 'data', 'type', 'postid']
+      ['token', 'data', 'type']
 
   self.editprofile = ->
     (data) ->
-      ##Not Implemented
+      ##Edit a user profile
+      vdata = v.validate data, edituserSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        ##Input valid, starting prepare to edit
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to alter profile' +
+            user.postid
+            query = {}
+            query[data.type] = data.data
+            profiles.update
+              uuid: user.uuid
+              ,
+                $set:
+                  query
+              , (err, result) ->
+                if result
+                  winston.info "profile altered: #{data.uuid}"
+                  socket.emit 'response',
+                    code: 200
+                    message: 'profile altered'
+                    errorcode: 0
+                    successcode: 307
+                    data: ''
+                    nonce: data.nonce
+                else
+                  winston.info "profile alter failed: #{data.uuid}"
+                  socket.emit 'response',
+                    code: 201
+                    message: 'profile alter failed'
+                    errorcode: 0
+                    successcode: 407
+                    data: ''
+                    nonce: data.nonce
+                if err
+                  raygunClient err
+                  winston.error err
+
+
+  acceptSchema =
+    type: 'object'
+    properties:
+      postid:
+        type: 'string'
+      token:
+        type: 'string'
+    required:
+      ['token', 'postid']
+
 
   self.accept = ->
     (data) ->
