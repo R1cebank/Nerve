@@ -8,7 +8,6 @@ _       = require('underscore')
 extractor = require 'keyword-extractor'
 md5 = require 'MD5'
 
-##NO INPUT VALIDATION
 
 module.exports = (socket,db, winston, raygunClient) ->
 
@@ -748,6 +747,39 @@ module.exports = (socket,db, winston, raygunClient) ->
               successcode: 0
               data: ''
               nonce: data.nonce
+
+  searchbykeySchema =
+    type: 'object'
+    properties:
+      keywords:
+        type: 'array'
+    required:
+      ['keywords']
+
+  self.searchbykey = ->
+    (data) ->
+      vdata = v.validate data, searchbykeySchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        posts.find({tags: { $all: data.keywords}}).toArray (err, docs) ->
+          socket.emit 'response',
+            code: 200
+            message: 'search data'
+            errorcode: 0
+            successcode: 303
+            data: docs
+            nonce: data.nonce
+
 
   emailhashSchema =
     type: 'object'

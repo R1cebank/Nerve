@@ -9,24 +9,9 @@ module.exports = (socket, db, winston, raygunClient) ->
 
   socket.on 'register', models.register()
 
-  ##data={name: 'name', password:'password'}
   socket.on 'login', models.login()
 
   socket.on 'reauth', models.reauth()
-
-
-  ###
-  {
-    title: '',
-    description: '',
-    date: '', tags:'',
-    skills:'',comp: '',
-    location:'',
-    expire:'',
-    remarks:'',
-    accessToken:'', uuid:''
-  }
-  ###
 
   socket.on 'edit', models.edit()
 
@@ -41,6 +26,8 @@ module.exports = (socket, db, winston, raygunClient) ->
   socket.on 'editprofile', models.editprofile()
 
   socket.on 'post', models.post()
+
+  socket.on 'searchbykey', models.searchbykey()
 
   socket.on 'delete', models.delete()
 
