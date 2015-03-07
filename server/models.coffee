@@ -533,6 +533,11 @@ module.exports = (socket,db, winston, raygunClient) ->
 
   self.editprofile = ->
     (data) ->
+      ##Not Implemented
+
+  self.accept = ->
+    (data) ->
+      ##accept a job
 
   self.post = ->
     (data) ->
