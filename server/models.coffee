@@ -140,6 +140,38 @@ module.exports = (socket,db, winston, raygunClient) ->
     ->
       winston.info 'client disconnected.'
 
+  postfomidSchema =
+    type: 'object'
+    properties:
+      uuid:
+        type: 'array'
+    required:
+      ['uuid']
+
+  self.postfromid = ->
+    (data) ->
+      vdata = v.validate data, postfomidSchema
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        posts.find({postid: {$in: data.uuid}}).toArray (err, docs) ->
+          socket.emit 'response',
+            code: 200
+            message: 'search data'
+            errorcode: 0
+            successcode: 303
+            data: docs
+            nonce: data.nonce
+
+
   self.checkauth = (token, callback) ->
     winston.info 'server requested to check authentication'
     if not urlsafe.validate token

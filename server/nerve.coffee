@@ -5,8 +5,8 @@
  # Copyright (c) 2014 r1cebank
  # Licensed under the MIT license.
 ###
-if process.env.PRODUCTION?
-  require 'newrelic'
+
+newrelic = require 'newrelic'
 express = require 'express'
 app = express()
 path = require 'path'
@@ -95,4 +95,5 @@ mongo.connect config.mongoUrl, (err, db) ->
     winston.error err
 
   io.on 'connection', (socket) ->
+    newrelic.recordMetric 'Custom/Connection/ConnectionAmount', 1
     require('./events.js')(socket, db, winston, raygunClient)
