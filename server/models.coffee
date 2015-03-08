@@ -44,7 +44,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
       nonce:
         type: 'string'
     required:
-      ['name','email','profession','pass', 'phone']
+      ['name','email','pass', 'phone']
 
   self.register = ->
     (data) ->
