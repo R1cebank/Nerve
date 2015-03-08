@@ -563,6 +563,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
     required:
       ['token', 'data', 'type', 'postid']
 
+
   self.edit = ->
     (data) ->
       ##Edit existing data here
@@ -680,6 +681,45 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
                   winston.error err
 
 
+  getmypostsSchema =
+    type: 'object'
+    properties:
+      token:
+        type: 'string'
+    required:
+      ['token']
+
+  self.getmyposts = ->
+    (data) ->
+      ##accept a job
+      ##Edit a user profile
+      vdata = v.validate data, getmypostsSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        self.checkauth data.token, (user) ->
+          if user
+            winston.info 'user ' + user.name + ' requested to see posted job' +
+            user.postid
+            posts.find({uuid: user.uuid}).toArray (err, docs) ->
+              socket.emit 'response',
+                code: 200
+                message: 'search data'
+                errorcode: 0
+                successcode: 303
+                data: docs
+                nonce: data.nonce
+
+
   acceptSchema =
     type: 'object'
     properties:
@@ -689,7 +729,6 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
         type: 'string'
     required:
       ['token', 'postid']
-
 
   self.accept = ->
     (data) ->

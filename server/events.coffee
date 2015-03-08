@@ -14,6 +14,8 @@ module.exports = (socket, db, winston, raygunClient, newrelic, io) ->
 
   socket.on 'login', models.login()
 
+  socket.on 'getmyposts', models.getmyposts()
+
   socket.on 'reauth', models.reauth()
 
   socket.on 'edit', models.edit()
