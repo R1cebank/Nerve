@@ -790,7 +790,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     data: ''
                     nonce: data.nonce
                 else
-                  winston.err err
+                  winston.error err
                   winston.info "new post create failed: #{data.title}: #{data.loc}"
                   socket.emit 'response',
                     code: 201
