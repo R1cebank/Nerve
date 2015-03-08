@@ -821,6 +821,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
           nonce: data.nonce
         return
       else
+        winston.info 'client input verification passed'
         posts.find({location: { $near:{$geometry: data.location, $maxDistance:
           data.maxDist}}}).toArray (err, docs) ->
           socket.emit 'response',
