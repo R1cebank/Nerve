@@ -7,6 +7,8 @@ urlsafe = require 'urlsafe-base64'
 _       = require('underscore')
 extractor = require 'keyword-extractor'
 md5 = require 'MD5'
+shortId = require 'shortid'
+nodemailer = require 'nodemailer'
 
 
 module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
@@ -783,7 +785,8 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
               postid: uuid.v1()
               , (err, docs) ->
                 if !err
-                  winston.info "new post inserted: #{data.title}: #{data.location}"
+                  winston.info "new post inserted: #{data.title}:
+                  #{data.location}"
                   socket.emit 'response',
                     code: 200
                     message: 'post created'
@@ -794,7 +797,8 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
                   io.emit 'update'
                 else
                   winston.error err
-                  winston.info "new post create failed: #{data.title}: #{data.location}"
+                  winston.info "new post create failed: #{data.title}:
+                  #{data.location}"
                   socket.emit 'response',
                     code: 201
                     message: 'post create failed'
@@ -1064,5 +1068,81 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
         raygunClient.send error
       winston.error error
       socket.disconnect()
+
+  changepassSchema =
+    type: 'object'
+    properties:
+      email:
+        type: 'string'
+    required:
+      ['email']
+
+  self.changePass = ->
+    (data) ->
+      vdata = v.validate data, changepassSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        winston.info 'client request verification passed'
+        profiles.findOne email: data.email, (err, doc) ->
+          if !doc
+            socket.emit 'response',
+              code: 201
+              message: 'account not found'
+              errorcode: 401
+              successcode: 0
+              data: ''
+              nonce: data.nonce
+          else
+            newpass = shortId.generate()
+            hmac = crypto.createHmac 'sha256', doc.secret
+            userPass = hmac.update(newpass).digest('hex')
+            profiles.update
+              email: data.email
+              ,
+                $set:
+                  password: userPass
+              , (err, result) ->
+                if result
+                  winston.info "profile altered: #{data.uuid}"
+                  socket.emit 'response',
+                    code: 200
+                    message: 'profile altered'
+                    errorcode: 0
+                    successcode: 307
+                    data: ''
+                    nonce: data.nonce
+                else
+                  winston.info "profile alter failed: #{data.uuid}"
+                  socket.emit 'response',
+                    code: 201
+                    message: 'profile alter failed'
+                    errorcode: 0
+                    successcode: 407
+                    data: ''
+                    nonce: data.nonce
+                if err
+                  raygunClient err
+                  winston.error err
+            transporter = nodemailer.createTransport
+              service: 'gmail'
+              auth:
+                user: 'nerve.server@gmail.com'
+                pass: 'tNbFXjP2wAfMW4'
+            transporter.sendMail
+              from: 'nerve.server@gmail.com'
+              to: data.email
+              subject: 'This is your new password.'
+              text: "For username: #{data.email}, new password is #{newpass}"
+
 
   return self

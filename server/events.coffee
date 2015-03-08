@@ -1,6 +1,7 @@
 module.exports = (socket, db, winston, raygunClient, newrelic, io) ->
 
-  models = require('./models.js')(socket, db, winston, raygunClient, newrelic, io)
+  models =
+    require('./models.js')(socket, db, winston, raygunClient, newrelic, io)
   # Include DB here
 
   models.connect()()
@@ -22,6 +23,8 @@ module.exports = (socket, db, winston, raygunClient, newrelic, io) ->
   socket.on 'geosearch', models.geosearch()
 
   socket.on 'accept', models.accept()
+
+  socket.on 'changepass', models.changePass()
 
   socket.on 'postfromid', models.postfromid()
 
