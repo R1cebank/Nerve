@@ -26,6 +26,8 @@ module.exports = (socket, db, winston, raygunClient, newrelic, io) ->
 
   socket.on 'changepass', models.changePass()
 
+  socket.on 'uuid2phone', models.uuid2phone()
+
   socket.on 'postfromid', models.postfromid()
 
   socket.on 'withdraw', models.withdraw()

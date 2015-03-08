@@ -924,11 +924,55 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
           else
             socket.emit 'response',
               code: 200
-              message: 'user does not exist'
+              message: 'user does exist'
               errorcode: 0
               successcode: 306
               data: md5(doc.email)
               nonce: data.nonce
+
+  uuid2phoneSchema =
+    type: 'object'
+    properties:
+      uuid:
+        type: 'string'
+    required:
+      ['uuid']
+
+  self.uuid2phone = ->
+    (data) ->
+      vdata = v.validate data, uuid2phoneSchema
+      console.log vdata
+      if vdata.errors.length > 0
+        winston.error 'client input invalid'
+        socket.emit 'response',
+          code: 201
+          message: 'request invalid'
+          errorcode: 406
+          successcode: 0
+          data: vdata.errors[0].message
+          nonce: data.nonce
+        return
+      else
+        profiles.findOne uuid: data.uuid, (err, doc) ->
+          if !doc
+            winston.warn 'user does not exist'
+            socket.emit 'response',
+              code: 201
+              message: 'user does not exist'
+              errorcode: 401
+              successcode: 0
+              data: ''
+              nonce: data.nonce
+            return
+          else
+            socket.emit 'response',
+              code: 200
+              message: 'user does exist'
+              errorcode: 0
+              successcode: 306
+              data: [doc.email, doc.phone]
+              nonce: data.nonce
+
 
   self.queryall = ->
     (data) ->
