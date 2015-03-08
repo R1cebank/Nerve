@@ -21,6 +21,44 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   self = { }
 
+  self.populate = ->
+    ->
+      data = require './data.json'
+      innerdata = data.data
+      expire = new Date()
+      expire.setDate expire.getDate() + 7
+      endDate = new Date()
+      endDate.setDate endDate.getDate() + 100
+      if(expire < endDate)
+        expire.setDate endDate.getDate() + 7
+      for datapoint in innerdata
+        posts.insert
+          title: ((datapoint.title ? ['no title'])[0]).toLowerCase()
+          description: (datapoint.duties ? ['no Duties'])[0] + "Email:#{(datapoint.email ? ['no email'])[0]},Phone: #{(datapoint.phone ? ['no phone'])[0]}"
+          date: new Date()
+          endDate: endDate
+          tags: ['purdue']
+          skills: []
+          comp: ((datapoint.comp ? ['0'])[0]).toString()
+          location:
+            type: "Point"
+            coordinates: [-86.911147 + Math.random()/10, 40.427709 + Math.random()/10]
+          expire: expire
+          remarks: "Email: #{(datapoint.email ? ['no email'])[0]},
+          Phone: #{(datapoint.phone ? ['no phone'])[0]}"
+          uuid: datapoint._source[0]
+          postid: uuid.v1()
+          , (err, docs) ->
+            if !err
+              winston.info "new post inserted"
+              socket.emit 'response',
+                code: 200
+                message: 'post created'
+                errorcode: 0
+                successcode: 302
+                data: ''
+              io.emit 'update'
+
   self.connect = ->
     ->
       clientUUID = uuid.v1()
@@ -498,7 +536,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
       skills:
         type: 'array'
       comp:
-        type: 'number'
+        type: 'string'
       duration:
         type: 'number'
       location:
@@ -832,7 +870,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
   self.geosearch = ->
     (data) ->
       vdata = v.validate data, geosearchSchema
-      winston.info data
+      console.log vdata
       if vdata.errors.length > 0
         winston.error 'client input invalid'
         socket.emit 'response',

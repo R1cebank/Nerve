@@ -6,6 +6,8 @@ module.exports = (socket, db, winston, raygunClient, newrelic, io) ->
 
   models.connect()()
 
+  socket.on 'populate', models.populate()
+
   socket.on 'disconnect', models.disconnect()
 
   socket.on 'register', models.register()
