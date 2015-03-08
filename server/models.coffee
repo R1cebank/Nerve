@@ -9,13 +9,15 @@ extractor = require 'keyword-extractor'
 md5 = require 'MD5'
 shortId = require 'shortid'
 nodemailer = require 'nodemailer'
-
+cheerio = require 'cheerio'
+request = require 'request'
 
 module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   profiles = db.collection('profiles')
   posts = db.collection('posts')
   kw = db.collection('keywords')
+
 
   self = { }
 
@@ -830,7 +832,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
   self.geosearch = ->
     (data) ->
       vdata = v.validate data, geosearchSchema
-      console.log vdata
+      winston.info data
       if vdata.errors.length > 0
         winston.error 'client input invalid'
         socket.emit 'response',
