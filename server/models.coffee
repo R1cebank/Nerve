@@ -9,7 +9,7 @@ extractor = require 'keyword-extractor'
 md5 = require 'MD5'
 
 
-module.exports = (socket,db, winston, raygunClient, newrelic) ->
+module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   profiles = db.collection('profiles')
   posts = db.collection('posts')
@@ -465,6 +465,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     successcode: 304
                     data: ''
                     nonce: data.nonce
+                  io.emit 'update'
                 else
                   winston.info "post delete failed: #{data.postid}"
                   socket.emit 'response',
@@ -559,6 +560,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     successcode: 307
                     data: ''
                     nonce: data.nonce
+                  io.emit 'update'
                 else
                   winston.info "post alter failed: #{data.postid}"
                   socket.emit 'response',
@@ -789,6 +791,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     successcode: 302
                     data: ''
                     nonce: data.nonce
+                  io.emit 'update'
                 else
                   winston.error err
                   winston.info "new post create failed: #{data.title}: #{data.location}"
