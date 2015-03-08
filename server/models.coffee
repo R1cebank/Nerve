@@ -764,7 +764,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                 , (err, docs) ->
                   winston.info "keywords inserted successfully."
             if data.title.length > 100
-              data.title.length = data.title.substring(0, 100)
+              data.title = data.title.substring 0, 100
             winston.info data
             posts.insert
               title: data.title
@@ -781,7 +781,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
               postid: uuid.v1()
               , (err, docs) ->
                 if !err
-                  winston.info "new post inserted: #{data.title}: #{data.loc}"
+                  winston.info "new post inserted: #{data.title}: #{data.location}"
                   socket.emit 'response',
                     code: 200
                     message: 'post created'
@@ -791,7 +791,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     nonce: data.nonce
                 else
                   winston.error err
-                  winston.info "new post create failed: #{data.title}: #{data.loc}"
+                  winston.info "new post create failed: #{data.title}: #{data.location}"
                   socket.emit 'response',
                     code: 201
                     message: 'post create failed'
