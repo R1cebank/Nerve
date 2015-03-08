@@ -96,4 +96,4 @@ mongo.connect config.mongoUrl, (err, db) ->
 
   io.on 'connection', (socket) ->
     newrelic.recordMetric 'Custom/Connection/ConnectionAmount', 1
-    require('./events.js')(socket, db, winston, raygunClient, newrelic)
+    require('./events.js')(socket, db, winston, raygunClient, newrelic, io)

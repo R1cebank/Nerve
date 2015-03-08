@@ -124,6 +124,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
     408 - JOB ACCEPTED
     409 - POST NOT EXIST
     410 - WITHDREW FAILED
+    411 - POST CREATE FAILED
   success codes
     300 - USER CREATED
     301 - USER LOGGED IN
@@ -764,6 +765,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                   winston.info "keywords inserted successfully."
             if data.title.length > 100
               data.title.length = data.title.substring(0, 100)
+            winston.info data
             posts.insert
               title: data.title
               description: data.description
@@ -778,14 +780,26 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
               uuid: user.uuid
               postid: uuid.v1()
               , (err, docs) ->
-                winston.info "new post inserted: #{data.title}: #{data.loc}"
-                socket.emit 'response',
-                  code: 200
-                  message: 'post created'
-                  errorcode: 0
-                  successcode: 302
-                  data: ''
-                  nonce: data.nonce
+                if !err
+                  winston.info "new post inserted: #{data.title}: #{data.loc}"
+                  socket.emit 'response',
+                    code: 200
+                    message: 'post created'
+                    errorcode: 0
+                    successcode: 302
+                    data: ''
+                    nonce: data.nonce
+                else
+                  winston.err err
+                  winston.info "new post create failed: #{data.title}: #{data.loc}"
+                  socket.emit 'response',
+                    code: 201
+                    message: 'post create failed'
+                    errorcode: 0
+                    successcode: 411
+                    data: err
+                    nonce: data.nonce
+
           else
             winston.warn 'user not authorized or authentication failed'
             socket.emit 'response',
@@ -831,8 +845,6 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
             successcode: 303
             data: docs
             nonce: data.nonce
-
-
 
 
   searchbykeySchema =
@@ -929,7 +941,6 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
         type: 'string'
     required:
       ['token']
-
 
   self.whoami = ->
     (data) ->
@@ -1031,13 +1042,9 @@ module.exports = (socket,db, winston, raygunClient, newrelic) ->
                     raygunClient err
                     winston.error err
 
-
-
-
   self.ping = ->
     ->
       winston.info 'recieved ping from MotionDex/Mocha, keep alive.'
-
 
   self.createToken = (user) ->
     time = Math.floor(new Date().getTime() / 1000)
