@@ -25,16 +25,12 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
     ->
       data = require './data.json'
       innerdata = data.data
-      expire = new Date()
-      expire.setDate expire.getDate() + 7
-      endDate = new Date()
-      endDate.setDate endDate.getDate() + 100
-      if(expire < endDate)
-        expire.setDate endDate.getDate() + 7
+      expire.setDate new Date().getDate() + 107
+      endDate.setDate new Date().getDate() + 100
       for datapoint in innerdata
         posts.insert
           title: ((datapoint.title ? ['no title'])[0]).toLowerCase()
-          description: (datapoint.duties ? ['no Duties'])[0] + "Email:#{(datapoint.email ? ['no email'])[0]},Phone: #{(datapoint.phone ? ['no phone'])[0]}"
+          description: (datapoint.duties ? ['no Duties'])[0] + " Email:#{(datapoint.email ? ['no email'])[0]},Phone: #{(datapoint.phone ? ['no phone'])[0]}"
           date: new Date()
           endDate: endDate
           tags: ['purdue']
@@ -923,7 +919,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
       else
         winston.info 'client input verification passed'
         posts.find({location: { $near:{$geometry: data.location, $maxDistance:
-          data.maxDist}}}).toArray (err, docs) ->
+          data.maxDist}}}).sort({date: -1}).toArray (err, docs) ->
           socket.emit 'response',
             code: 200
             message: 'search data'
@@ -956,7 +952,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
           nonce: data.nonce
         return
       else
-        posts.find({tags: { $all: data.keywords}}).toArray (err, docs) ->
+        posts.find({tags: { $all: data.keywords}}).sort({date: -1}).toArray (err, docs) ->
           socket.emit 'response',
             code: 200
             message: 'search data'
@@ -1055,7 +1051,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   self.queryall = ->
     (data) ->
-      posts.find({}).toArray (err, docs) ->
+      posts.find({}).sort({date: -1}).toArray (err, docs) ->
         socket.emit 'response',
           code: 200
           message: 'all data'
