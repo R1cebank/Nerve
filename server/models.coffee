@@ -273,6 +273,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
                 profession: doc.profession
                 talents: doc.talents
                 uuid: doc.uuid
+                admin: doc.admin
               callback user
             else
               winston.warn 'user token not match'
