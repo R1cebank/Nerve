@@ -490,7 +490,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
           if user
             winston.info 'user ' + user.name + ' requested to delete ' +
             data.postid
-            if user.admin
+            if user.admin is true
               posts.remove
                 postid: data.postid
                 , (err, result) ->
@@ -516,33 +516,33 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
                   if err
                     raygunClient err
                     winston.error err
-
-            posts.remove
-              postid: data.postid
-              uuid: user.uuid
-              , (err, result) ->
-                if result
-                  winston.info "post deleted: #{data.postid}"
-                  socket.emit 'response',
-                    code: 200
-                    message: 'post deleted'
-                    errorcode: 0
-                    successcode: 304
-                    data: ''
-                    nonce: data.nonce
-                  io.emit 'update'
-                else
-                  winston.info "post delete failed: #{data.postid}"
-                  socket.emit 'response',
-                    code: 201
-                    message: 'post delete failed'
-                    errorcode: 0
-                    successcode: 405
-                    data: ''
-                    nonce: data.nonce
-                if err
-                  raygunClient err
-                  winston.error err
+            else
+              posts.remove
+                postid: data.postid
+                uuid: user.uuid
+                , (err, result) ->
+                  if result
+                    winston.info "post deleted: #{data.postid}"
+                    socket.emit 'response',
+                      code: 200
+                      message: 'post deleted'
+                      errorcode: 0
+                      successcode: 304
+                      data: ''
+                      nonce: data.nonce
+                    io.emit 'update'
+                  else
+                    winston.info "post delete failed: #{data.postid}"
+                    socket.emit 'response',
+                      code: 201
+                      message: 'post delete failed'
+                      errorcode: 0
+                      successcode: 405
+                      data: ''
+                      nonce: data.nonce
+                  if err
+                    raygunClient err
+                    winston.error err
 
   extractorOptions =
     language:"english",
