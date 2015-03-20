@@ -12,6 +12,11 @@ nodemailer = require 'nodemailer'
 cheerio = require 'cheerio'
 request = require 'request'
 
+extractorOptions =
+  language:"english",
+  remove_digits: true,
+  return_changed_case:true
+
 module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   profiles = db.collection('profiles')
@@ -23,17 +28,29 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
 
   self.populate = ->
     ->
+      winston.info 'populating database'
       data = require './data.json'
       innerdata = data.data
+      expire = new Date()
+      endDate = new Date()
       expire.setDate new Date().getDate() + 107
       endDate.setDate new Date().getDate() + 100
       for datapoint in innerdata
+        dataString = (datapoint.duties ? ['no Duties'])[0] +
+        ((datapoint.title ? ['no title'])[0]).toLowerCase()
+        keywords = extractor.extract(dataString, extractorOptions)
+        for word in keywords
+          kw.insert
+            keyword: word
+            hitrate: 0
+            , (err, docs) ->
+              winston.info "keywords inserted successfully."
         posts.insert
           title: ((datapoint.title ? ['no title'])[0]).toLowerCase()
           description: (datapoint.duties ? ['no Duties'])[0] + " Email:#{(datapoint.email ? ['no email'])[0]},Phone: #{(datapoint.phone ? ['no phone'])[0]}"
           date: new Date()
           endDate: endDate
-          tags: ['purdue']
+          tags: keywords
           skills: []
           comp: ((datapoint.comp ? ['0'])[0]).toString()
           location:
@@ -544,11 +561,6 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
                   if err
                     raygunClient err
                     winston.error err
-
-  extractorOptions =
-    language:"english",
-    remove_digits: true,
-    return_changed_case:true
 
   postSchema =
     type: 'object'
