@@ -55,7 +55,7 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
           comp: ((datapoint.comp ? ['0'])[0]).toString()
           location:
             type: "Point"
-            coordinates: [-86.911147 + Math.random()/10, 40.427709 + Math.random()/10]
+            coordinates: [-86.911147 + Math.random()/100, 40.427709 + Math.random()/100]
           expire: expire
           remarks: "Email: #{(datapoint.email ? ['no email'])[0]},
           Phone: #{(datapoint.phone ? ['no phone'])[0]}"

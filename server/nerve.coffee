@@ -51,6 +51,9 @@ guest =
 
 app.use bodyParser.urlencoded extended: false
 app.use express.static path.join __dirname, '/www'
+app.use (req, res, next) ->
+  res.header "Access-Control-Allow-Origin", "*"
+  
 app.use (err, req, res, next) ->
   raygunClient.send err,
     request: req
@@ -66,6 +69,9 @@ mongo.connect config.mongoUrl, (err, db) ->
     process.exit()
 
   winston.info 'connected to database.'
+
+  config =
+    origins: '*:*'
 
   server = exports.server = http.listen port, ->
     host = server.address().address
