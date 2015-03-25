@@ -992,7 +992,8 @@ module.exports = (socket,db, winston, raygunClient, newrelic, io) ->
           nonce: data.nonce
         return
       else
-        posts.find({tags: { $all: data.keywords}}).sort({date: -1}).toArray (err, docs) ->
+        regex = new RegExp data.keywords, 'i'
+        posts.find({tags: { $regex: regex}}).sort({date: -1}).toArray (err, docs) ->
           socket.emit 'response',
             code: 200
             message: 'search data'
